@@ -1,0 +1,27 @@
+uwsgi:
+  home: /home/jrm/.env/standard
+  http-socket: 127.0.0.1:4646
+  master: true
+  module: spire.runtime.uwsgi
+  need-app: true
+  processes: 4
+  threads: 10
+components:
+  - flux.components.Flux
+configuration:
+  schema:flux:
+    admin_url: postgresql://postgres@localhost/postgres
+    echo: false
+    url: postgresql://postgres@localhost/flux
+logging:
+  disable_existing_loggers: false
+  formatters:
+    standard:
+      (): spire.support.logs.LogFormatter
+  handlers:
+    stream:
+      class: logging.StreamHandler
+      formatter: standard
+  root:
+    level: DEBUG
+    handlers: [stream]
