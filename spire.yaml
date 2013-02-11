@@ -9,6 +9,8 @@ uwsgi:
 components:
   - flux.components.Flux
 configuration:
+  flux.components.Flux/api:
+    path: /
   schema:flux:
     admin_url: postgresql://postgres@localhost/postgres
     echo: false

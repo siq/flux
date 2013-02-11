@@ -1,0 +1,2 @@
+bundle = 'platoon.API'
+mixins = 'platoon.binding'
