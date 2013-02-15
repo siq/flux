@@ -30,6 +30,7 @@ class Operation(Resource):
         schema = Structure({
             'id': UUID(nonempty=True),
             'tag': Text(nonempty=True),
+            'subject': Token(nonempty=True),
             'info': Field(),
             'status': Enumeration('executing aborted completed failed timedout', nonnull=True),
             'output': Field(),

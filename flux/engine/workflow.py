@@ -16,3 +16,7 @@ class Workflow(Element):
         'entry': Token(nonempty=True),
     }, key_order='name entry prerun postrun preoperation postoperation steps')
 
+    def initiate(self, session, run):
+        entry = self.steps[self.entry]
+        execution = run.execution(session, self.entry)
+        

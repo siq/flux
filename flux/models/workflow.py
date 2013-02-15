@@ -3,30 +3,28 @@ from sqlalchemy.orm.collections import attribute_mapped_collection
 
 from flux.engine.workflow import Workflow as WorkflowElement
 
-__all__ = ('Workflow', 'WorkflowVersion')
+__all__ = ('Workflow',)
 
 schema = Schema('flux')
 
 class WorkflowCache(object):
-    """A cache for parsed workflows."""
-
     def __init__(self):
         self.cache = {}
 
-    def acquire(self, version):
+    def acquire(self, workflow):
         try:
-            modified, element = self.cache[version.id]
+            modified, element = self.cache[workflow.id]
         except KeyError:
-            return self._instantiate_version(version)
+            return self.instantiate(workflow)
 
-        if version.modified == modified:
+        if workflow.modified == modified:
             return element
         else:
-            return self._instantiate_version(version)
+            return self.instantiate(workflow)
 
-    def _instantiate_version(self, version):
-        element = WorkflowElement.unserialize(version.specification)
-        self.cache[version.id] = (version.modified, element)
+    def instantiate(self, workflow):
+        element = WorkflowElement.unserialize(workflow.specification)
+        self.cache[workflow.id] = (workflow.modified, element)
         return element
 
 class Workflow(Model):
@@ -36,32 +34,15 @@ class Workflow(Model):
         schema = schema
         tablename = 'workflow'
 
+    cache = WorkflowCache()
+
     id = Identifier()
     name = Text(nullable=False)
     designation = Token(unique=True)
-
-    versions = relationship('WorkflowVersion', backref='workflow',
-        collection_class=attribute_mapped_collection('version'),
-        cascade='all,delete-orphan', passive_deletes=True)
-
-class WorkflowVersion(Model):
-    """A workflow version."""
-
-    class meta:
-        constraints = [UniqueConstraint('workflow_id', 'version')]
-        schema = schema
-        tablename = 'workflow_version'
-
-    id = Identifier()
-    workflow_id = ForeignKey('workflow.id', nullable=False, ondelete='CASCADE')
-    version = Integer(minimum=1, nullable=False)
     specification = Text(nullable=False)
+    modified = DateTime(timezone=True)
 
-    cache = WorkflowCache()
-
-    @property
-    def name(self):
-        return self.workflow.name
+    runs = relationship('Run', backref='workflow')
 
     @property
     def workflow(self):

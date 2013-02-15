@@ -9,7 +9,7 @@ class Rule(Element):
 
     schema = Structure({
         'description': Text(),
-        'condition': Text(),
+        'condition': Field(),
         'actions': Sequence(Structure({
             'action': Token(segments=2, nonempty=True),
         }, nonnull=True), nonnull=True),

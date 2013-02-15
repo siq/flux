@@ -14,7 +14,7 @@ class Execution(Model):
     run_id = ForeignKey('run.id', nullable=False, ondelete='CASCADE')
     execution_id = Integer(minimum=1, nullable=False)
     ancestor_id = ForeignKey('Execution')
-    step = Token(segments=2, nullable=False)
+    step = Token(nullable=False)
     name = Text()
     status = Enumeration('pending active completed aborted', nullable=False, default='pending')
     started = DateTime(timezone=True)
@@ -22,3 +22,9 @@ class Execution(Model):
     parameters = Json()
 
     descendants = relationship('Execution', backref='ancestor')
+
+    @classmethod
+    def create(cls, session, **attrs):
+        execution = cls(**attrs)
+        session.add(execution)
+        return execution

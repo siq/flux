@@ -1,14 +1,8 @@
-from mesh.standard import bind
-from spire.core import Unit
 from spire.mesh import Definition, MeshDependency
 from spire.schema import *
 from sqlalchemy.orm.collections import attribute_mapped_collection
 
-from flux.bindings import platoon
 from flux.constants import *
-
-Process = bind(platoon, 'platoon/1.0/process')
-Queue = bind(platoon, 'platoon/1.0/queue')
 
 schema = Schema('flux')
 
@@ -44,6 +38,19 @@ class Operation(Model):
         session.add(operation)
         return operation
 
+    def update(self, session, outcomes=None, **attrs):
+        self.update_with_mapping(**attrs)
+        if outcomes is not None:
+            collection = self.outcomes
+            for name, outcome in outcomes.iteritems():
+                if name in collection:
+                    collection[name].update_with_mapping(outcome)
+                else:
+                    collection[name] = Outcome(name=name, **outcome)
+            for name in collection.keys():
+                if name not in outcomes:
+                    del collection[name]
+
 class Outcome(Model):
     """An operation outcome."""
 
@@ -58,22 +65,3 @@ class Outcome(Model):
     description = Text()
     outcome = Enumeration('success failure', nullable=False)
     schema = Definition()
-
-class QueueRegistry(Unit):
-    """The queue registry."""
-
-    flux = MeshDependency('flux')
-    platoon = MeshDependency('platoon')
-    schema = SchemaDependency('flux')
-
-    def register(self, operation):
-        self._put_queue(operation)
-
-    def _put_queue(self, operation):
-        endpoint = self.flux.prepare('flux/1.0/operation', 'process', operation.id,
-            preparation={'type': 'http'})
-
-        Queue(id=operation.queue_id, subject=operation.id, name=operation.name,
-            endpoint=endpoint).put()
-
-

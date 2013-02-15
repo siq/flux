@@ -1,0 +1,47 @@
+uwsgi:
+  daemonize: ${LOGPATH}/flux.log
+  group: uwsgi
+  home: ${ENVPATH}/python
+  http-socket: 127.0.0.1:9997
+  log-date: "%%Y-%%m-%%dT%%H:%%M:%%SL UWSGI"
+  master: true
+  module: spire.runtime.uwsgi
+  need-app: true
+  pidfile: ${VARPATH}/flux.pid
+  processes: 4
+  procname-prefix-spaced: "[flux]"
+  threads: 10
+  touch-logreopen: ${VARPATH}/flux.logreopen
+  uid: uwsgi
+  vacuum: true
+include:
+  - /etc/siq/local.yaml
+components:
+  - flux.components.Flux
+configuration:
+  flux.component.Flux/api:
+    path: /
+  mesh:flux:
+    bundle: flux.API
+    url: http://localhost:9997/
+  mesh:docket:
+    bundle: docket.API
+    url: http://localhost:9998/
+  mesh:platoon:
+    bundle: platoon.API
+    url: http://localhost:4321/
+  schema:flux:
+    admin_url: postgresql://postgres@localhost/postgres
+    url: postgresql://postgres@localhost/flux
+logging:
+  disable_existing_loggers: false
+  formatters:
+    standard:
+      (): spire.support.logs.LogFormatter
+  handlers:
+    stream:
+      class: logging.StreamHandler
+      formatter: standard
+  root:
+    level: DEBUG
+    handlers: [stream]
