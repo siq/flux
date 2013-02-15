@@ -12,6 +12,7 @@ class Run(Resource):
         workflow_id = UUID(nonempty=True, operators='equal')
         name = Text(operators='equal')
         status = Enumeration('active completed suspended aborted', oncreate=False)
+        parameters = Field()
         started = DateTime(utc=True, readonly=True)
         ended = DateTime(utc=True, readonly=True)
 

@@ -3,6 +3,7 @@ from spire.mesh import MeshDependency, ModelController
 from spire.schema import NoResultFound, SchemaDependency
 
 from flux.bindings import platoon
+from flux.engine.queue import QueueManager
 from flux.models import *
 from flux.resources import Run as RunResource
 
@@ -13,7 +14,7 @@ class RunController(ModelController):
     version = (1, 0)
 
     model = Run
-    mapping = 'id workflow_id name status started ended'
+    mapping = 'id workflow_id name status parameters started ended'
     schema = SchemaDependency('flux')
 
     flux = MeshDependency('flux')

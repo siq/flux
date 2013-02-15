@@ -1,7 +1,8 @@
 from mesh.standard import OperationError
 from spire.schema import *
 
-from flux.models import Execution, Workflow
+from flux.models.execution import Execution
+from flux.models.workflow import Workflow
 
 __all__ = ('Run',)
 
@@ -19,10 +20,11 @@ class Run(Model):
     name = Text(nullable=False)
     status = Enumeration('pending active completed suspended aborted',
         nullable=False, default='pending')
+    parameters = Json()
     started = DateTime(timezone=True)
     ended = DateTime(timezone=True)
 
-    executions = relationship('Execution', backref='run', order_by='execution_id')
+    executions = relationship(Execution, backref='run')
 
     @property
     def next_execution_id(self):
@@ -42,10 +44,10 @@ class Run(Model):
         session.add(run)
         return run
 
-    def execution(self, session, step, parameters=None, ancestor_id=None, name=None):
+    def create_execution(self, session, step, parameters=None, ancestor=None, name=None):
         return Execution.create(session, run_id=self.id, execution_id=self.next_execution_id,
-            ancestor_id=ancestor_id, step=step, name=name, parameters=parameters)
+            ancestor=ancestor, step=step, name=name, parameters=parameters)
 
     def initiate(self, session):
         workflow = self.workflow.workflow
-        workflow.initiate(self)
+        workflow.initiate(session, self)

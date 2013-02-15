@@ -1,18 +1,21 @@
 from scheme import *
 
-class Condition(Element):
-    """A workflow rule condition."""
+from flux.engine.action import Action
 
+class Condition(Element):
+    """A rule condition."""
+
+    #schema = Union(Text(nonempty=True), Map(Field(), nonempty=True),
+    #    name='condition')
+    schema = Map(Field(), nonempty=True, name='condition')
 
 class Rule(Element):
     """A workflow rule."""
 
     schema = Structure({
         'description': Text(),
-        'condition': Field(),
-        'actions': Sequence(Structure({
-            'action': Token(segments=2, nonempty=True),
-        }, nonnull=True), nonnull=True),
+        'condition': Condition.schema,
+        'actions': Sequence(Action.schema, nonnull=True),
         'terminal': Boolean(nonnull=True, default=False),
     })
 

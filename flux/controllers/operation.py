@@ -1,6 +1,6 @@
 from spire.core import Dependency
 from spire.mesh import ModelController
-from spire.schema import SchemaDependency
+from spire.schema import NoResultFound, SchemaDependency
 
 from flux.engine.queue import QueueManager
 from flux.models import *
@@ -25,8 +25,15 @@ class OperationController(ModelController):
         response({'id': subject.id})
 
     def process(self, request, response, subject, data):
-        print '!!! PROCESS'
-        print repr(data)
+        session = self.schema.session
+        try:
+            execution = Execution.load(session, id=data['id'])
+        except NoResultFound:
+            return # todo: address exception properly
+
+        status = data['status']
+        if status == 'completed':
+            execution.complete(session, data.get('output'))
 
     def update(self, request, response, subject, data):
         if not data:

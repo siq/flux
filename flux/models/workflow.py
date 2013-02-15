@@ -3,8 +3,6 @@ from sqlalchemy.orm.collections import attribute_mapped_collection
 
 from flux.engine.workflow import Workflow as WorkflowElement
 
-__all__ = ('Workflow',)
-
 schema = Schema('flux')
 
 class WorkflowCache(object):

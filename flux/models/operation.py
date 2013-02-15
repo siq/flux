@@ -1,10 +1,14 @@
+from mesh.standard import bind
 from spire.mesh import Definition, MeshDependency
 from spire.schema import *
 from sqlalchemy.orm.collections import attribute_mapped_collection
 
+from flux.bindings import platoon
 from flux.constants import *
 
 schema = Schema('flux')
+
+Process = bind(platoon, 'platoon/1.0/process')
 
 class Operation(Model):
     """A workflow operation."""
@@ -37,6 +41,16 @@ class Operation(Model):
 
         session.add(operation)
         return operation
+
+    def initiate(self, tag, input=None, id=None, timeout=None):
+        params = {'queue_id': self.queue_id, 'tag': tag}
+        if id is not None:
+            params['id'] = id
+        if input is not None:
+            params['input'] = input
+        if timeout is not None:
+            params['timeout'] = timeout
+        return Process.create(**params)
 
     def update(self, session, outcomes=None, **attrs):
         self.update_with_mapping(**attrs)
