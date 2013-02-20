@@ -1,5 +1,7 @@
 from spire.schema import *
 
+from flux.constants import *
+
 schema = Schema('flux')
 
 class Execution(Model):
@@ -16,7 +18,7 @@ class Execution(Model):
     ancestor_id = ForeignKey('execution.id')
     step = Token(nullable=False)
     name = Text()
-    status = Enumeration('pending active completed aborted', nullable=False, default='pending')
+    status = Enumeration(RUN_STATUSES, nullable=False, default='pending')
     started = DateTime(timezone=True)
     ended = DateTime(timezone=True)
     parameters = Json()

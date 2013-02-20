@@ -1,6 +1,8 @@
 from mesh.standard import *
 from scheme import *
 
+from flux.constants import *
+
 class Execution(Resource):
     """A step execution."""
 
@@ -15,7 +17,7 @@ class Execution(Resource):
         ancestor_id = UUID(readonly=True, operators='equal')
         step = Token(segments=2, readonly=True, operators='equal')
         name = Text()
-        status = Enumeration('pending active completed aborted', nonnull=True)
+        status = Enumeration(RUN_STATUSES, nonnull=True)
         started = DateTime(readonly=True)
         ended = DateTime(readonly=True)
         parameters = Field(readonly=True)

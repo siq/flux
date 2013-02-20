@@ -1,8 +1,11 @@
 from scheme import *
 from spire.schema import NoResultFound
+from spire.support.logs import LogHelper
 
 from flux.engine.rule import RuleList
 from flux.models import Operation
+
+log = LogHelper('flux')
 
 class Step(Element):
     """A workflow element."""
@@ -31,6 +34,14 @@ class Step(Element):
         except NoResultFound:
             raise Exception('FIX ME')
 
+        candidates = {}
+        if run.parameters:
+            for key, value in run.parameters.iteritems():
+                candidates['$%s' % key] = value
+
+        if params and candidates:
+            params = operation.schema.interpolate(params, candidates)
+
         execution = run.create_execution(session, self.name, params, ancestor)
         session.commit()
 
@@ -50,7 +61,7 @@ class Step(Element):
         step = workflow.steps[action.step]
 
         try:
-            operation = session.query(Operation).get(self.operation)
+            operation = session.query(Operation).get(step.operation)
         except NoResultFound:
             raise Exception('FIX ME')
 
@@ -65,4 +76,4 @@ class Step(Element):
 
         print params
 
-        self.initiate(session, run, params, execution)
+        step.initiate(session, run, params, execution)

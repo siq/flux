@@ -1,5 +1,5 @@
 from spire.core import Dependency
-from spire.mesh import ModelController
+from spire.mesh import MeshDependency, ModelController
 from spire.schema import NoResultFound, SchemaDependency
 
 from flux.engine.queue import QueueManager
@@ -15,6 +15,9 @@ class OperationController(ModelController):
 
     schema = SchemaDependency('flux')
     manager = Dependency(QueueManager)
+
+    flux = MeshDependency('flux')
+    platoon = MeshDependency('platoon')
 
     def create(self, request, response, subject, data):
         session = self.schema.session

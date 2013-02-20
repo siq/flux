@@ -1,6 +1,8 @@
 from mesh.standard import *
 from scheme import *
 
+from flux.constants import *
+
 class Run(Resource):
     """A workflow run."""
 
@@ -11,8 +13,8 @@ class Run(Resource):
         id = UUID(operators='equal')
         workflow_id = UUID(nonempty=True, operators='equal')
         name = Text(operators='equal')
-        status = Enumeration('active completed suspended aborted', oncreate=False)
-        parameters = Field()
+        status = Enumeration(RUN_STATUSES, oncreate=False)
+        parameters = Field(onupdate=False)
         started = DateTime(utc=True, readonly=True)
         ended = DateTime(utc=True, readonly=True)
 

@@ -1,6 +1,7 @@
 from mesh.standard import OperationError
 from spire.schema import *
 
+from flux.constants import *
 from flux.models.execution import Execution
 from flux.models.workflow import Workflow
 
@@ -18,8 +19,7 @@ class Run(Model):
     id = Identifier()
     workflow_id = ForeignKey('workflow.id', nullable=False)
     name = Text(nullable=False)
-    status = Enumeration('pending active completed suspended aborted',
-        nullable=False, default='pending')
+    status = Enumeration(RUN_STATUSES, nullable=False, default='pending')
     parameters = Json()
     started = DateTime(timezone=True)
     ended = DateTime(timezone=True)
