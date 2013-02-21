@@ -17,3 +17,9 @@ class Action(Element):
         nonempty=True,
         polymorphic_on='action')
 
+    def execute(self):
+        raise NotImplementedError()
+
+class ExecuteStep(Action):
+    polymorphic_identity = 'execute-step'
+
