@@ -37,6 +37,14 @@ class OperationController(ModelController):
         status = data['status']
         if status == 'completed':
             execution.complete(session, data.get('output'))
+        # TODO: handle process statuses
+        elif status == 'failed':
+            pass
+        elif status == 'progress':
+            pass
+        elif status == 'timedout':
+            pass
+
         session.commit()
 
     def update(self, request, response, subject, data):

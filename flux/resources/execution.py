@@ -23,3 +23,8 @@ class Execution(Resource):
         started = DateTime(readonly=True)
         ended = DateTime(readonly=True)
         parameters = Field(readonly=True)
+
+    class update(Resource.update):
+        schema = {
+            'status': Enumeration('aborted'),
+        }
