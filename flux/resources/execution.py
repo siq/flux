@@ -3,6 +3,8 @@ from scheme import *
 
 from flux.constants import *
 
+__all__ = ('Execution',)
+
 class Execution(Resource):
     """A step execution."""
 

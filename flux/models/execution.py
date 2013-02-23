@@ -1,8 +1,11 @@
+from scheme import current_timestamp
 from spire.schema import *
 
 from flux.constants import *
 
 schema = Schema('flux')
+
+__all__ = ('Execution',)
 
 class Execution(Model):
     """A step execution."""
@@ -32,11 +35,12 @@ class Execution(Model):
 
     @classmethod
     def create(cls, session, **attrs):
-        execution = cls(**attrs)
+        execution = cls(started=current_timestamp(), **attrs)
         session.add(execution)
         return execution
 
     def complete(self, session, output):
+        self.ended = current_timestamp()
         workflow = self.workflow.workflow
         step = workflow.steps[self.step]
 

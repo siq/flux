@@ -37,6 +37,7 @@ class OperationController(ModelController):
         status = data['status']
         if status == 'completed':
             execution.complete(session, data.get('output'))
+        session.commit()
 
     def update(self, request, response, subject, data):
         if not data:
