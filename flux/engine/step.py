@@ -32,7 +32,9 @@ class Step(Element):
         try:
             operation = session.query(Operation).get(self.operation)
         except NoResultFound:
-            raise Exception('FIX ME')
+            run.status = 'failed'
+            run.ended = current_timestamp()
+            raise
 
         candidates = {}
         if run.parameters:
@@ -55,7 +57,7 @@ class Step(Element):
         if status != 'completed':
             if status in ('failed', 'timedout',):
                 run.status = status
-            return 
+            return
 
         postoperation = self.postoperation
         if not postoperation:
@@ -68,7 +70,9 @@ class Step(Element):
         try:
             operation = session.query(Operation).get(step.operation)
         except NoResultFound:
-            raise Exception('FIX ME')
+            run.status = 'failed'
+            run.ended = current_timestamp()
+            raise
 
         candidates = {}
         if output:
