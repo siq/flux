@@ -39,10 +39,15 @@ class Execution(Model):
         session.add(execution)
         return execution
 
-    def complete(self, session, output):
-        self.ended = current_timestamp()
+    def complete(self, session, status, output):
+        execution.ended = current_timestamp()
+        execution.status = status
+
         workflow = self.workflow.workflow
         step = workflow.steps[self.step]
 
-        # HACK HACK HACK
         step.complete(session, self, workflow, output)
+
+    def update_progress(self, session, progress):
+        # TODO: handle progress_update
+        self.status = 'executing'

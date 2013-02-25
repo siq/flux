@@ -35,15 +35,10 @@ class OperationController(ModelController):
             return # todo: address exception properly
 
         status = data['status']
-        if status == 'completed':
-            execution.complete(session, data.get('output'))
-        # TODO: handle process statuses
-        elif status == 'failed':
-            pass
+        if status in ('completed', 'failed', 'timedout',):
+            execution.complete(session, status, data.get('output'))
         elif status == 'progress':
-            pass
-        elif status == 'timedout':
-            pass
+            execution.update_progress(session, data.get('progress'))
 
         session.commit()
 

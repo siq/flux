@@ -50,7 +50,12 @@ class Step(Element):
     def complete(self, session, execution, workflow, output):
         from flux.models import Run
         run = Run.load(session, id=execution.run_id, lockmode='update')
-        execution.status = 'completed'
+
+        status = execution.status
+        if status != 'completed':
+            if status in ('failed', 'timedout',):
+                run.status = status
+            return 
 
         postoperation = self.postoperation
         if not postoperation:
