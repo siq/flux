@@ -34,6 +34,7 @@ class Step(Element):
         except NoResultFound:
             run.status = 'failed'
             run.ended = current_timestamp()
+            session.commit()
             raise
 
         candidates = {}
@@ -57,11 +58,13 @@ class Step(Element):
         if status != 'completed':
             if status in ('failed', 'timedout',):
                 run.status = status
+                run.ended = current_timestamp()
             return
 
         postoperation = self.postoperation
         if not postoperation:
             # finish workflow
+            run.ended = current_timestamp()
             return
 
         action = postoperation.rules[0].actions[0]
@@ -72,6 +75,7 @@ class Step(Element):
         except NoResultFound:
             run.status = 'failed'
             run.ended = current_timestamp()
+            session.commit()
             raise
 
         candidates = {}

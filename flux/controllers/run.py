@@ -1,4 +1,5 @@
 from mesh.standard import bind
+from scheme import current_timestamp
 from spire.mesh import MeshDependency, ModelController
 from spire.schema import NoResultFound, SchemaDependency
 
@@ -41,5 +42,6 @@ class RunController(ModelController):
 
         task = data['task']
         if task == 'initiate-run':
+            subject.started = current_timestamp()
             subject.initiate(session)
             session.commit()
