@@ -2,7 +2,7 @@ from mesh.standard import OperationError
 from spire.schema import *
 
 from flux.constants import *
-from flux.models.execution import Execution
+from flux.models.execution import WorkflowExecution
 from flux.models.workflow import Workflow
 
 __all__ = ('Run',)
@@ -24,7 +24,7 @@ class Run(Model):
     started = DateTime(timezone=True)
     ended = DateTime(timezone=True)
 
-    executions = relationship(Execution, backref='run')
+    executions = relationship(WorkflowExecution, backref='run')
 
     @property
     def next_execution_id(self):
@@ -45,7 +45,7 @@ class Run(Model):
         return run
 
     def create_execution(self, session, step, parameters=None, ancestor=None, name=None):
-        return Execution.create(session, run_id=self.id, execution_id=self.next_execution_id,
+        return WorkflowExecution.create(session, run_id=self.id, execution_id=self.next_execution_id,
             ancestor=ancestor, step=step, name=name, parameters=parameters)
 
     def initiate(self, session):

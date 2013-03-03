@@ -4,7 +4,7 @@ from spire.mesh import ModelController, MeshDependency
 from spire.schema import SchemaDependency
 
 from flux.bindings import platoon
-from flux.models import Execution as ExecutionModel
+from flux.models import WorkflowExecution as WorkflowExecutionModel
 from flux.resources import Execution
 
 Process = bind(platoon, 'platoon/1.0/process')
@@ -12,7 +12,7 @@ Process = bind(platoon, 'platoon/1.0/process')
 class ExecutionController(ModelController):
     """A step execution controller"""
 
-    model = ExecutionModel
+    model = WorkflowExecutionModel
     resource = Execution
     schema = SchemaDependency('flux')
     version = (1, 0)

@@ -5,9 +5,9 @@ from flux.constants import *
 
 schema = Schema('flux')
 
-__all__ = ('Execution',)
+__all__ = ('WorkflowExecution',)
 
-class Execution(Model):
+class WorkflowExecution(Model):
     """A step execution."""
 
     class meta:
@@ -26,7 +26,7 @@ class Execution(Model):
     ended = DateTime(timezone=True)
     parameters = Json()
 
-    descendants = relationship('Execution',
+    descendants = relationship('WorkflowExecution',
         backref=backref('ancestor', remote_side=[id]))
 
     @property
