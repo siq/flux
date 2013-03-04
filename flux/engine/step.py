@@ -29,13 +29,14 @@ class Step(Element):
         if not params:
             params = None
 
-        try:
-            operation = session.query(Operation).get(self.operation)
-        except NoResultFound:
+        operation = session.query(Operation).get(self.operation)
+        if not operation:
+            log('warning', 'workflow operation %s is not registered',
+                    self.operation)
             run.status = 'failed'
             run.ended = current_timestamp()
             session.commit()
-            raise
+            return
 
         candidates = {}
         if run.parameters:
@@ -70,13 +71,14 @@ class Step(Element):
         action = postoperation.rules[0].actions[0]
         step = workflow.steps[action.step]
 
-        try:
-            operation = session.query(Operation).get(step.operation)
-        except NoResultFound:
+        operation = session.query(Operation).get(step.operation)
+        if not operation:
+            log('warning', 'workflow operation %s is not registered',
+                    step.operation)
             run.status = 'failed'
             run.ended = current_timestamp()
             session.commit()
-            raise
+            return
 
         candidates = {}
         if output:
