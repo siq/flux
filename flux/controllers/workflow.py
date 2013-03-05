@@ -3,6 +3,7 @@ from spire.schema import SchemaDependency
 
 from flux.models import *
 from flux.resources import Workflow as WorkflowResource
+from flux.engine.workflow import Workflow as WorkflowEngine
 
 class WorkflowController(ModelController):
     resource = WorkflowResource
@@ -11,3 +12,36 @@ class WorkflowController(ModelController):
     model = Workflow
     mapping = 'id name designation specification modified'
     schema = SchemaDependency('flux')
+
+    def generate(self, request, response, subject, data):
+        session = self.schema.session
+        name = data['name']
+        operations = data['operations']
+        specification = {'name': name, 'entry': 'op0'}
+        steps = {}
+
+        step_name = None
+        for i, op in enumerate(operations):
+            new_step_name = 'op%s' % i
+            if step_name:
+                steps[step_name]['postoperation'][0]['actions'] = new_step_name
+
+            steps[new_step_name] = {
+                'operation': op['operation'],
+                'parameters': op['parameters'],
+                'postoperation': [{
+                    'condition': {},
+                    'actions': [],
+                    'terminal': True,
+                }],
+            }
+            step_name = new_step_name
+
+        specification['steps'] = steps
+        instance = self.model(name=name,
+            specification=WorkflowEngine.schema.serialize(
+                specification, format='yaml'))
+        session.add(instance)
+        session.commit()
+
+        response({'id': instance.id})

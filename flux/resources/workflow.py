@@ -14,3 +14,15 @@ class Workflow(Resource):
         designation = Token(operators='equal')
         specification = Text(nonempty=True)
         modified = DateTime(utc=True, readonly=True)
+
+    class generate:
+        endpoint = ('GENERATE', 'workflow')
+        title = 'Generate a workflow'
+        schema = {
+            'name': Text(nonempty=True),
+            'operations': Sequence(Field(), nonempty=True),
+        }
+        responses = {
+            OK: Response({'id': UUID(nonempty=True)}),
+            INVALID: Response(Errors),
+        }
