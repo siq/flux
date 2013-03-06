@@ -47,9 +47,9 @@ class Step(Element):
             params = operation.schema.interpolate(params, candidates)
 
         execution = run.create_execution(session, self.name, params, ancestor)
-        session.commit()
-
         operation.initiate(id=execution.id, tag=self.name, input=params, timeout=self.timeout)
+
+        session.commit()
 
     def complete(self, session, execution, workflow, output):
         from flux.models import Run
