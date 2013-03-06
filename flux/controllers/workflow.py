@@ -14,7 +14,6 @@ class WorkflowController(ModelController):
     schema = SchemaDependency('flux')
 
     def generate(self, request, response, subject, data):
-        session = self.schema.session
         name = data['name']
         operations = data['operations']
         specification = {'name': name, 'entry': 'op0'}
@@ -38,10 +37,7 @@ class WorkflowController(ModelController):
             step_name = new_step_name
 
         specification['steps'] = steps
-        instance = self.model(name=name,
-            specification=WorkflowEngine.schema.serialize(
-                specification, format='yaml'))
-        session.add(instance)
-        session.commit()
+        specification = WorkflowEngine.schema.serialize(specification, 
+                format='yaml')
 
-        response({'id': instance.id})
+        response({'name': name, 'specification': specification})

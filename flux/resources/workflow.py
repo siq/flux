@@ -17,12 +17,18 @@ class Workflow(Resource):
 
     class generate:
         endpoint = ('GENERATE', 'workflow')
-        title = 'Generate a workflow'
+        title = 'Generate a workflow specification'
         schema = {
             'name': Text(nonempty=True),
-            'operations': Sequence(Field(), nonempty=True),
+            'operations': Sequence(Structure({
+                    'operation': Token(segments=2, nonempty=False),
+                    'parameters': Field(),
+            }), nonempty=True),
         }
         responses = {
-            OK: Response({'id': UUID(nonempty=True)}),
+            OK: Response({
+                'name': Text(nonempty=True),
+                'specification': Text(nonempty=True)
+            }),
             INVALID: Response(Errors),
         }
