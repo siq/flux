@@ -17,6 +17,16 @@ class Run(Resource):
         parameters = Field(onupdate=False)
         started = DateTime(utc=True, readonly=True)
         ended = DateTime(utc=True, readonly=True)
+        executions = Sequence(Structure({
+            'id': UUID(nonempty=True),
+            'execution_id': Integer(),
+            'ancestor_id': UUID(),
+            'step': Token(segments=2),
+            'name': Text(),
+            'status': Enumeration(RUN_STATUSES, nonnull=True),
+            'started': DateTime(),
+            'ended': DateTime(),
+        }), readonly=True, deferred=True)
 
     class task:
         endpoint = ('TASK', 'run')

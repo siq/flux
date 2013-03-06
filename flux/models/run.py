@@ -24,7 +24,8 @@ class Run(Model):
     started = DateTime(timezone=True)
     ended = DateTime(timezone=True)
 
-    executions = relationship(WorkflowExecution, backref='run')
+    executions = relationship(WorkflowExecution, backref='run',
+            order_by=WorkflowExecution.execution_id)
 
     @property
     def next_execution_id(self):

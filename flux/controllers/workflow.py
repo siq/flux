@@ -16,12 +16,12 @@ class WorkflowController(ModelController):
     def generate(self, request, response, subject, data):
         name = data['name']
         operations = data['operations']
-        specification = {'name': name, 'entry': 'op0'}
+        specification = {'name': name, 'entry': 'step:0'}
         steps = {}
 
         step_name = None
         for i, op in enumerate(operations):
-            new_step_name = 'op%s' % i
+            new_step_name = 'step:%s' % i
             if step_name:
                 steps[step_name]['postoperation'][0]['actions'] = new_step_name
 
