@@ -22,10 +22,7 @@ class WorkflowController(ModelController):
         step_name = None
         for i, op in enumerate(operations):
             new_step_name = 'step:%s' % i
-            if step_name:
-                steps[step_name]['postoperation'][0]['actions'].append(new_step_name)
-
-            steps[new_step_name] = {
+            step = {
                 'operation': op['operation'],
                 'parameters': op['parameters'],
                 'postoperation': [{
@@ -34,10 +31,18 @@ class WorkflowController(ModelController):
                     'terminal': True,
                 }],
             }
+            if step_name:
+                steps[step_name]['postoperation'][0]['actions'].append({
+                    'action': 'execute-step',
+                    'step': new_step_name,
+                    'parameters': step['parameters']
+                })
+
             step_name = new_step_name
+            steps[step_name] = step
 
         specification['steps'] = steps
-        specification = WorkflowEngine.schema.serialize(specification, 
+        specification = WorkflowEngine.schema.serialize(specification,
                 format='yaml')
 
         response({'name': name, 'specification': specification})
