@@ -40,8 +40,8 @@ class WorkflowExecution(Model):
         return execution
 
     def complete(self, session, status, output):
-        execution.ended = current_timestamp()
-        execution.status = status
+        self.ended = current_timestamp()
+        self.status = status
 
         workflow = self.workflow.workflow
         step = workflow.steps[self.step]
