@@ -23,7 +23,7 @@ class WorkflowController(ModelController):
         for i, op in enumerate(operations):
             new_step_name = 'step:%s' % i
             if step_name:
-                steps[step_name]['postoperation'][0]['actions'] = new_step_name
+                steps[step_name]['postoperation'][0]['actions'].append(new_step_name)
 
             steps[new_step_name] = {
                 'operation': op['operation'],

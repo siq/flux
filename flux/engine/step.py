@@ -58,14 +58,14 @@ class Step(Element):
         status = execution.status
         if status != 'completed':
             if status in ('failed', 'timedout',):
-                run.status = status
-                run.ended = current_timestamp()
+                run.complete(session, status)
             return
 
         postoperation = self.postoperation
-        if not postoperation:
+        # TODO: needs some work
+        if not postoperation or not postoperation.rules or not postoperation.rules[0].actions:
             # finish workflow
-            run.ended = current_timestamp()
+            run.complete(session, 'completed')
             return
 
         action = postoperation.rules[0].actions[0]
@@ -73,11 +73,8 @@ class Step(Element):
 
         operation = session.query(Operation).get(step.operation)
         if not operation:
-            log('warning', 'workflow operation %s is not registered',
-                    step.operation)
-            run.status = 'failed'
-            run.ended = current_timestamp()
-            session.commit()
+            log('warning', 'workflow operation %s is not registered', step.operation)
+            run.complete(session, 'failed')
             return
 
         candidates = {}

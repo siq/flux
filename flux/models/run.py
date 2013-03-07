@@ -1,4 +1,5 @@
 from mesh.standard import OperationError
+from scheme import current_timestamp
 from spire.schema import *
 
 from flux.constants import *
@@ -52,3 +53,7 @@ class Run(Model):
     def initiate(self, session):
         workflow = self.workflow.workflow
         workflow.initiate(session, self)
+
+    def complete(self, session, status):
+        self.status = status
+        self.ended = current_timestamp()
