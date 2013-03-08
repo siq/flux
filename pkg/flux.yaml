@@ -24,7 +24,7 @@ include:
 components:
   - flux.components.Flux
 configuration:
-  flux.component.Flux/api:
+  flux.components.Flux/api:
     path: /
   mesh:flux:
     bundle: flux.API
