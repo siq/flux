@@ -22,6 +22,10 @@ ENTITY_REGISTRATIONS = [
         name='run',
         title='Run',
         specification=API.describe(['run']),
+        change_event='run:changed',
+        cached_attributes={
+            'status': {'type': 'text'},
+        },
     ),
 ]
 

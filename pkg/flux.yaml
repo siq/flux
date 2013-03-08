@@ -37,6 +37,7 @@ configuration:
     url: http://localhost:4321/
   schema:flux:
     admin_url: postgresql://postgres@localhost/postgres
+    migrations: flux:migrations
     url: postgresql://postgres@localhost/flux
 logging:
   disable_existing_loggers: false
