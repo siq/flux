@@ -11,9 +11,15 @@ components:
 configuration:
   flux.components.Flux/api:
     path: /
+  mesh:docket:
+    bundle: docket.API
+    url: http://localhost:9996/
+  mesh:flux:
+    bundle: flux.API
+    url: http://localhost:9995/
   schema:flux:
     admin_url: postgresql://postgres@localhost/postgres
-    echo: false
+    migrations: flux:migrations
     url: postgresql://postgres@localhost/flux
 logging:
   disable_existing_loggers: false

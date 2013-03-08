@@ -14,6 +14,11 @@ uwsgi:
   touch-logreopen: ${VARPATH}/flux.logreopen
   uid: uwsgi
   vacuum: true
+spire:
+  registration_url: http://localhost:10000/nucleus/1.0/service
+  services:
+    - id: flux
+      dependencies: [platoon, docket]
 include:
   - /etc/siq/local.yaml
 components:
