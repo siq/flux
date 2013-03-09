@@ -1,4 +1,4 @@
-from spire.mesh import ModelController
+from spire.mesh import ModelController, support_returning
 from spire.schema import SchemaDependency
 
 from flux.models import *
@@ -12,6 +12,14 @@ class WorkflowController(ModelController):
     model = Workflow
     mapping = 'id name designation specification modified'
     schema = SchemaDependency('flux')
+
+    @support_returning
+    def create(self, request, response, subject, data):
+        session = self.schema.session
+        subject = self.model.create(session, **data)
+
+        session.commit()
+        return subject
 
     def generate(self, request, response, subject, data):
         name = data['name']
@@ -46,3 +54,14 @@ class WorkflowController(ModelController):
                 format='yaml')
 
         response({'name': name, 'specification': specification})
+
+    @support_returning
+    def update(self, request, response, subject, data):
+        if not data:
+            return subject
+
+        session = self.schema.session
+        subject.update(session, **data)
+
+        session.commit()
+        return subject

@@ -1,3 +1,4 @@
+from scheme import current_timestamp
 from spire.schema import *
 from sqlalchemy.orm.collections import attribute_mapped_collection
 
@@ -45,3 +46,13 @@ class Workflow(Model):
     @property
     def workflow(self):
         return self.cache.acquire(self)
+
+    @classmethod
+    def create(cls, session, **attrs):
+        subject = cls(modified=current_timestamp(), **attrs)
+        session.add(subject)
+        return subject
+
+    def update(self, session, **attrs):
+        self.update_with_mapping(attrs, ignore='id')
+        self.modified = current_timestamp()

@@ -15,6 +15,9 @@ class Workflow(Resource):
         specification = Text(nonempty=True)
         modified = DateTime(utc=True, readonly=True)
 
+    class create(Resource.create):
+        support_returning = True
+
     class generate:
         endpoint = ('GENERATE', 'workflow')
         title = 'Generate a workflow specification'
@@ -32,3 +35,6 @@ class Workflow(Resource):
             }),
             INVALID: Response(Errors),
         }
+
+    class update(Resource.update):
+        support_returning = True

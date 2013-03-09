@@ -28,6 +28,9 @@ class Run(Resource):
             'ended': DateTime(),
         }), readonly=True, deferred=True)
 
+    class create(Resource.create):
+        support_returning = True
+
     class task:
         endpoint = ('TASK', 'run')
         title = 'Initiating a run task'
@@ -44,3 +47,6 @@ class Run(Resource):
             OK: Response(),
             INVALID: Response(Errors),
         }
+
+    class update(Resource.update):
+        support_returning = True
