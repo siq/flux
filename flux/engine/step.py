@@ -31,8 +31,7 @@ class Step(Element):
 
         operation = session.query(Operation).get(self.operation)
         if not operation:
-            log('warning', 'workflow operation %s is not registered',
-                    self.operation)
+            log('error', 'workflow operation %s is not registered', self.operation)
             run.status = 'failed'
             run.ended = current_timestamp()
             session.commit()
