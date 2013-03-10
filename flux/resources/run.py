@@ -8,9 +8,10 @@ class Run(Resource):
 
     name = 'run'
     version = 1
+    requests = 'create delete get load query update'
 
     class schema:
-        id = UUID(operators='equal')
+        id = UUID(nonnull=True, oncreate=True, operators='equal')
         workflow_id = UUID(nonempty=True, operators='equal')
         name = Text(operators='equal')
         status = Enumeration(RUN_STATUSES, oncreate=False)
@@ -47,6 +48,3 @@ class Run(Resource):
             OK: Response(),
             INVALID: Response(Errors),
         }
-
-    class update(Resource.update):
-        support_returning = True

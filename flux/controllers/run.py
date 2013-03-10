@@ -1,6 +1,6 @@
 from mesh.standard import bind
 from scheme import current_timestamp
-from spire.mesh import MeshDependency, ModelController
+from spire.mesh import MeshDependency, ModelController, support_returning
 from spire.schema import NoResultFound, SchemaDependency
 
 from flux.bindings import platoon
@@ -21,6 +21,7 @@ class RunController(ModelController):
     flux = MeshDependency('flux')
     platoon = MeshDependency('platoon')
 
+    @support_returning
     def create(self, request, response, subject, data):
         session = self.schema.session
         subject = self.model.create(session, **data)
@@ -30,7 +31,7 @@ class RunController(ModelController):
             self.flux.prepare('flux/1.0/run', 'task', None,
             {'task': 'initiate-run', 'id': subject.id}))
 
-        response({'id': subject.id})
+        return subject
 
     def task(self, request, response, subject, data):
         session = self.schema.session
