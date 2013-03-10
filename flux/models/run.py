@@ -32,6 +32,19 @@ class Run(Model):
     def next_execution_id(self):
         return len(self.executions) + 1
 
+    def complete(self, session, status):
+        self.status = status
+        self.ended = current_timestamp()
+
+    def contribute(self, interpolator):
+        run = {'id': self.id, 'name': self.name, 'started': self.started}
+        if self.parameters:
+            run['env'] = self.parameters
+        else:
+            run['env'] = {}
+
+        interpolator['run'] = run
+
     @classmethod
     def create(cls, session, workflow_id, name=None, **attrs):
         try:
@@ -53,7 +66,3 @@ class Run(Model):
     def initiate(self, session):
         workflow = self.workflow.workflow
         workflow.initiate(session, self)
-
-    def complete(self, session, status):
-        self.status = status
-        self.ended = current_timestamp()

@@ -20,6 +20,5 @@ class Workflow(Element):
     }, key_order='name entry prerun postrun preoperation postoperation steps')
 
     def initiate(self, session, run):
-        log('critical', 'initiating workflow %s', self.name)
         step = self.steps[self.entry]
-        step.initiate(session, run, run.parameters)
+        step.initiate(session, run)

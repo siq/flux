@@ -2,6 +2,7 @@ from scheme import *
 from spire.schema import NoResultFound
 from spire.support.logs import LogHelper
 
+from flux.engine.interpolation import Interpolator
 from flux.engine.rule import RuleList
 from flux.models import Operation
 
@@ -21,35 +22,29 @@ class Step(Element):
     }, nonnull=True)
 
     def initiate(self, session, run, parameters=None, ancestor=None):
+        operation = session.query(Operation).get(self.operation)
+        if not operation:
+            log('error', 'workflow operation %s is not registered', self.operation)
+            run.complete(session, 'failed')
+            session.commit()
+            return
+
         params = {}
         if self.parameters:
             params.update(self.parameters)
         if parameters:
             params.update(parameters)
-        if not params:
+
+        if params:
+            interpolator = self._construct_interpolator(run)
+            params = interpolator.interpolate(operation.schema, params)
+        else:
             params = None
-
-        operation = session.query(Operation).get(self.operation)
-        if not operation:
-            log('error', 'workflow operation %s is not registered', self.operation)
-            run.status = 'failed'
-            run.ended = current_timestamp()
-            session.commit()
-            return
-
-        candidates = {}
-        if run.parameters:
-            for key, value in run.parameters.iteritems():
-                candidates['$%s' % key] = value
-
-        if params and candidates:
-            params = operation.schema.interpolate(params, candidates)
 
         execution = run.create_execution(session, self.name, params, ancestor)
         operation.initiate(id=execution.id, tag=self.name, input=params, timeout=self.timeout)
-
         session.commit()
-
+        
     def complete(self, session, execution, workflow, output):
         from flux.models import Run
         run = Run.load(session, id=execution.run_id, lockmode='update')
@@ -88,3 +83,9 @@ class Step(Element):
         print params
 
         step.initiate(session, run, params, execution)
+
+    def _construct_interpolator(self, run):
+        interpolator = Interpolator()
+        run.contribute(interpolator)
+        return interpolator
+
