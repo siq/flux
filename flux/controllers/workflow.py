@@ -45,6 +45,7 @@ class WorkflowController(ModelController):
                     'step': new_step_name,
                     'parameters': step['parameters']
                 })
+                steps[step_name]['postoperation'][0]['terminal'] = False
 
             step_name = new_step_name
             steps[step_name] = step
