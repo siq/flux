@@ -1,14 +1,19 @@
-from mesh.standard import OperationError
+from mesh.standard import OperationError, bind
 from scheme import current_timestamp
 from spire.schema import *
+from spire.support.logs import LogHelper
 
+from flux.bindings import platoon
 from flux.constants import *
 from flux.models.execution import WorkflowExecution
 from flux.models.workflow import Workflow
 
 __all__ = ('Run',)
 
+Event = bind(platoon, 'platoon/1.0/event')
+
 schema = Schema('flux')
+log = LogHelper('flux')
 
 class Run(Model):
     """A workflow run."""
@@ -26,7 +31,8 @@ class Run(Model):
     ended = DateTime(timezone=True)
 
     executions = relationship(WorkflowExecution, backref='run',
-            order_by=WorkflowExecution.execution_id)
+        cascade='all,delete-orphan', passive_deletes=True,
+        order_by=WorkflowExecution.execution_id)
 
     @property
     def next_execution_id(self):
@@ -35,6 +41,11 @@ class Run(Model):
     def complete(self, session, status):
         self.status = status
         self.ended = current_timestamp()
+
+        try:
+            Event.create(topic='run:changed', aspects={'id': self.id})
+        except Exception:
+            log('exception', 'failed to file run:changed event')
 
     def contribute(self, interpolator):
         run = {'id': self.id, 'name': self.name, 'started': self.started}

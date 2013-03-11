@@ -44,6 +44,32 @@ class Step(Element):
         execution = run.create_execution(session, self.name, params, ancestor)
         operation.initiate(id=execution.id, tag=self.name, input=params, timeout=self.timeout)
         session.commit()
+
+    def new_complete(self, session, execution, workflow, output):
+        from flux.models import Run
+        run = Run.load(session, id=execution.run_id, lockmode='update')
+
+        status = execution.status
+        if status != 'completed':
+            if status in ('failed', 'timedout'):
+                run.complete(session, status)
+            return
+
+        from flux.models import Run
+        run = Run.load(session, id=execution.run_id, lockmode='update')
+
+        status = execution.status
+        if status != 'completed':
+            if status in ('failed', 'timedout'):
+                run.complete(session, status)
+            return
+
+        postoperation = self.postoperation
+        if postoperation:
+            postoperation.evaluate(session, workflow, run, execution)
+
+
+
         
     def complete(self, session, execution, workflow, output):
         from flux.models import Run

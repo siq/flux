@@ -1,9 +1,10 @@
 from spire.core import Dependency
 from spire.mesh import MeshDependency, ModelController
-from spire.schema import NoResultFound, SchemaDependency
+from spire.schema import NoResultFound, OperationError, SchemaDependency
 
 from flux.engine.queue import QueueManager
 from flux.models import *
+from flux.operations import *
 from flux.resources import Operation as OperationResource
 
 class OperationController(ModelController):
@@ -27,6 +28,13 @@ class OperationController(ModelController):
         session.commit()
         response({'id': subject.id})
 
+    def operation(self, request, response, subject, data):
+        operation = OPERATIONS.get(data['subject'])
+        if operation:
+            operation().execute(self.schema.session, response, data)
+        else:
+            raise OperationError('invalid-operation')
+
     def process(self, request, response, subject, data):
         session = self.schema.session
         try:
@@ -41,6 +49,11 @@ class OperationController(ModelController):
             execution.update_progress(session, data.get('progress'))
 
         session.commit()
+
+    def task(self, request, response, subject, data):
+        task = data['task']
+        if task == 'complete-test-operation':
+            TestOperation().complete(self.schema.session, data)
 
     def update(self, request, response, subject, data):
         if not data:

@@ -4,10 +4,12 @@ from spire.mesh import MeshDependency, MeshServer
 from spire.runtime import onstartup
 
 import flux.models
-from flux.bindings import docket
+from flux.bindings import docket, platoon
 from flux.bundles import API
+from flux.operations import OPERATIONS
 from flux.resources import *
 
+Executor = bind(platoon, 'platoon/1.0/executor')
 Registration = bind(docket, 'docket/1.0/registration')
 
 ENTITY_REGISTRATIONS = [
@@ -34,6 +36,7 @@ class Flux(Component):
 
     docket = MeshDependency('docket')
     flux = MeshDependency('flux')
+    platoon = MeshDependency('platoon')
 
     @onstartup(service='flux')
     def startup_flux(self):
@@ -41,3 +44,10 @@ class Flux(Component):
         for registration in ENTITY_REGISTRATIONS:
             registration.url = url
             registration.put()
+
+        endpoints = {}
+        for operation in OPERATIONS.itervalues():
+            subject, endpoint = operation().register()
+            endpoints[subject] = endpoint
+
+        Executor(id='flux', endpoints=endpoints).put()

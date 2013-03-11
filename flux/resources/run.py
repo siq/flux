@@ -22,7 +22,7 @@ class Run(Resource):
             'id': UUID(nonempty=True),
             'execution_id': Integer(),
             'ancestor_id': UUID(),
-            'step': Token(segments=2),
+            'step': Token(),
             'name': Text(),
             'status': Enumeration(RUN_STATUSES, nonnull=True),
             'started': DateTime(),

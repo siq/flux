@@ -24,6 +24,26 @@ class Operation(Resource):
         schema = Definition()
         outcomes = Map(Outcome, nonempty=True)
 
+    class operation:
+        endpoint = ('OPERATION', 'operation')
+        schema = Structure({
+            'id': UUID(nonempty=True),
+            'tag': Text(nonempty=True),
+            'subject': Token(nonempty=True),
+            'status': Token(nonempty=True),
+            'input': Field(),
+            'state': Field(),
+        }, nonempty=True)
+        responses = {
+            OK: Response({
+                'status': Token(nonempty=True),
+                'output': Field(),
+                'progress': Field(),
+                'state': Field(),
+            }),
+            INVALID: Response(Errors),
+        }
+
     class process:
         endpoint = ('PROCESS', 'operation/id')
         specific = True
@@ -36,6 +56,22 @@ class Operation(Resource):
             'output': Field(),
             'progress': Field(),
         }, nonempty=True)
+        responses = {
+            OK: Response(),
+            INVALID: Response(Errors),
+        }
+
+    class task:
+        endpoint = ('TASK', 'operation')
+        title = 'Initiating an operation task'
+        schema = Structure(
+            structure={
+                'complete-test-operation': {
+                    'state': Field(),
+                },
+            },
+            nonempty=True,
+            polymorphic_on='task')
         responses = {
             OK: Response(),
             INVALID: Response(Errors),
