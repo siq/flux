@@ -1,9 +1,11 @@
 from scheme import *
+from scheme.util import recursive_merge
 from spire.schema import NoResultFound
 from spire.support.logs import LogHelper
 
 from flux.engine.interpolation import Interpolator
 from flux.engine.rule import Environment, RuleList
+from flux.exceptions import *
 from flux.models import Operation
 
 log = LogHelper('flux')
@@ -21,29 +23,27 @@ class Step(Element):
         'timeout': Integer(),
     }, nonnull=True)
 
-    def initiate(self, session, run, parameters=None, ancestor=None):
+    def initiate(self, session, run, ancestor=None, parameters=None, values=None):
         operation = session.query(Operation).get(self.operation)
         if not operation:
-            log('error', 'workflow operation %s is not registered', self.operation)
-            run.complete(session, 'failed')
-            session.commit()
-            return
+            raise UnknownOperationError(self.operation)
 
         params = {}
         if self.parameters:
-            params.update(self.parameters)
+            recursive_merge(params, self.parameters)
         if parameters:
-            params.update(parameters)
+            recursive_merge(params, parameters)
 
         if params:
-            interpolator = self._construct_interpolator(run)
+            interpolator = self._construct_interpolator(run=run, values=values)
             params = interpolator.interpolate(operation.schema, params)
         else:
             params = None
-
+        
         execution = run.create_execution(session, self.name, params, ancestor)
-        operation.initiate(id=execution.id, tag=self.name, input=params, timeout=self.timeout)
         session.commit()
+
+        operation.initiate(id=execution.id, tag=self.name, input=params, timeout=self.timeout)
 
     def complete(self, session, execution, workflow, output):
         from flux.models import Run
@@ -55,7 +55,11 @@ class Step(Element):
                 run.complete(session, status)
             return
 
-        environment = Environment(workflow, run, output, execution)
+        interpolator = self._construct_interpolator(run, execution)
+        if output:
+            interpolator['step']['out'] = output
+
+        environment = Environment(workflow, run, interpolator, output, execution)
 
         postoperation = self.postoperation
         if postoperation:
@@ -64,8 +68,12 @@ class Step(Element):
 
         run.complete(session, 'completed')
 
-    def _construct_interpolator(self, run):
+    def _construct_interpolator(self, run=None, execution=None, values=None):
         interpolator = Interpolator()
-        run.contribute(interpolator)
+        if run:
+            interpolator.merge(run.contribute_values())
+        if execution:
+            interpolator.merge(execution.contribute_values())
+        if values:
+            interpolator.merge(values)
         return interpolator
-

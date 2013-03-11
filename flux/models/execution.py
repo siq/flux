@@ -33,6 +33,10 @@ class WorkflowExecution(Model):
     def workflow(self):
         return self.run.workflow
 
+    def contribute_values(self):
+        step = self.extract_dict('id execution_id step name status started ended')
+        return {'step': step}
+
     @classmethod
     def create(cls, session, **attrs):
         execution = cls(started=current_timestamp(), **attrs)

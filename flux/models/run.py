@@ -47,14 +47,13 @@ class Run(Model):
         except Exception:
             log('exception', 'failed to file run:changed event')
 
-    def contribute(self, interpolator):
+    def contribute_values(self):
         run = {'id': self.id, 'name': self.name, 'started': self.started}
         if self.parameters:
             run['env'] = self.parameters
         else:
             run['env'] = {}
-
-        interpolator['run'] = run
+        return {'run': run}
 
     @classmethod
     def create(cls, session, workflow_id, name=None, **attrs):

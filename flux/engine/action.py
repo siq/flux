@@ -1,6 +1,7 @@
 from scheme import *
 
 from flux.engine.interpolation import Interpolator
+from flux.models import Operation
 
 class Action(Element):
     """A workflow action."""
@@ -32,5 +33,6 @@ class ExecuteStep(Action):
         except KeyError:
             raise
 
-        step.initiate(session, environment.run, step.parameters,
-            environment.ancestor)
+        values = {'step': {'out': environment.output}}
+        step.initiate(session, environment.run, environment.ancestor,
+            self.parameters, values)
