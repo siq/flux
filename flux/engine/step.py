@@ -3,7 +3,7 @@ from spire.schema import NoResultFound
 from spire.support.logs import LogHelper
 
 from flux.engine.interpolation import Interpolator
-from flux.engine.rule import RuleList
+from flux.engine.rule import Environment, RuleList
 from flux.models import Operation
 
 log = LogHelper('flux')
@@ -45,70 +45,24 @@ class Step(Element):
         operation.initiate(id=execution.id, tag=self.name, input=params, timeout=self.timeout)
         session.commit()
 
-    def new_complete(self, session, execution, workflow, output):
-        from flux.models import Run
-        run = Run.load(session, id=execution.run_id, lockmode='update')
-
-        status = execution.status
-        if status != 'completed':
-            if status in ('failed', 'timedout'):
-                run.complete(session, status)
-            return
-
-        from flux.models import Run
-        run = Run.load(session, id=execution.run_id, lockmode='update')
-
-        status = execution.status
-        if status != 'completed':
-            if status in ('failed', 'timedout'):
-                run.complete(session, status)
-            return
-
-        postoperation = self.postoperation
-        if postoperation:
-            postoperation.evaluate(session, workflow, run, execution)
-
-
-
-        
     def complete(self, session, execution, workflow, output):
         from flux.models import Run
         run = Run.load(session, id=execution.run_id, lockmode='update')
 
         status = execution.status
         if status != 'completed':
-            if status in ('failed', 'timedout',):
+            if status in ('failed', 'timedout'):
                 run.complete(session, status)
             return
 
+        environment = Environment(workflow, run, output, execution)
+
         postoperation = self.postoperation
-        # TODO: needs some work
-        if not postoperation or not postoperation.rules or not postoperation.rules[0].actions:
-            # finish workflow
-            run.complete(session, 'completed')
+        if postoperation:
+            postoperation.evaluate(session, environment)
             return
 
-        action = postoperation.rules[0].actions[0]
-        step = workflow.steps[action.step]
-
-        operation = session.query(Operation).get(step.operation)
-        if not operation:
-            log('warning', 'workflow operation %s is not registered', step.operation)
-            run.complete(session, 'failed')
-            return
-
-        candidates = {}
-        if output:
-            for key, value in output.iteritems():
-                candidates['$%s' % key] = value
-
-        params = action.parameters
-        if params and candidates:
-            params = operation.schema.interpolate(params, candidates)
-
-        print params
-
-        step.initiate(session, run, params, execution)
+        run.complete(session, 'completed')
 
     def _construct_interpolator(self, run):
         interpolator = Interpolator()

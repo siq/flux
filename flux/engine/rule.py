@@ -2,6 +2,15 @@ from scheme import *
 
 from flux.engine.action import Action
 
+class Environment(object):
+    """A rule evaluation environment."""
+
+    def __init__(self, workflow, run, output=None, ancestor=None):
+        self.ancestor = ancestor
+        self.output = output
+        self.run = run
+        self.workflow = workflow
+
 class Condition(Element):
     """A rule condition."""
 
@@ -19,29 +28,29 @@ class Rule(Element):
         'terminal': Boolean(nonnull=True, default=False),
     })
 
-    def evaluate(self):
+    def evaluate(self, session, environment):
         condition = self.condition
         if not condition:
             return True
 
         return True
 
-    def execute(self):
+    def execute(self, session, environment):
         actions = self.actions
         if not actions:
             return
 
         for action in actions:
-            action.execute()
+            action.execute(session, environment)
 
 class RuleList(Element):
     """A workflow rule list."""
 
     schema = Sequence(Rule.schema, name='rules', nonnull=True)
 
-    def evaluate(self):
+    def evaluate(self, session, environment):
         for rule in self.rules:
-            if rule.evaluate():
-                rule.execute()
+            if rule.evaluate(session, environment):
+                rule.execute(session, environment)
                 if rule.terminal:
                     break
