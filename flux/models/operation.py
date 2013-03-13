@@ -22,6 +22,7 @@ class Operation(Model):
     phase = Enumeration(OPERATION_PHASES, nullable=False)
     description = Text()
     schema = Definition()
+    parameters = Json()
 
     outcomes = relationship('Outcome', backref='operation',
         collection_class=attribute_mapped_collection('name'),

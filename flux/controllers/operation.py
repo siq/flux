@@ -12,7 +12,7 @@ class OperationController(ModelController):
     version = (1, 0)
 
     model = Operation
-    mapping = 'id name phase description schema'
+    mapping = 'id name phase description schema parameters'
 
     schema = SchemaDependency('flux')
     manager = Dependency(QueueManager)

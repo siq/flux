@@ -29,6 +29,8 @@ class Step(Element):
             raise UnknownOperationError(self.operation)
 
         params = {}
+        if operation.parameters:
+            recursive_merge(params, operation.parameters)
         if self.parameters:
             recursive_merge(params, self.parameters)
         if parameters:
