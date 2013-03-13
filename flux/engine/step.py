@@ -2,11 +2,12 @@ from scheme import *
 from scheme.util import recursive_merge
 from spire.schema import NoResultFound
 from spire.support.logs import LogHelper
+from sqlalchemy import func
 
 from flux.engine.interpolation import Interpolator
 from flux.engine.rule import Environment, RuleList
 from flux.exceptions import *
-from flux.models import Operation
+from flux.models import Operation, WorkflowExecution
 
 log = LogHelper('flux')
 
@@ -68,7 +69,12 @@ class Step(Element):
             postoperation.evaluate(session, environment)
             return
 
-        run.complete(session, 'completed')
+        active_executions = session.query(func.count(WorkflowExecution.id)).filter(
+            WorkflowExecution.run_id==run.id,
+            WorkflowExecution.status!='completed').scalar()
+
+        if not active_executions:
+            run.complete(session, 'completed')
 
     def _construct_interpolator(self, run=None, execution=None, values=None):
         interpolator = Interpolator()

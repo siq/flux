@@ -38,7 +38,7 @@ class OperationController(ModelController):
     def process(self, request, response, subject, data):
         session = self.schema.session
         try:
-            execution = WorkflowExecution.load(session, id=data['id'])
+            execution = WorkflowExecution.load(session, id=data['id'], lockmode='update')
         except NoResultFound:
             return # todo: address exception properly
 

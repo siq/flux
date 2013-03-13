@@ -24,9 +24,9 @@ class Workflow(Resource):
         schema = {
             'name': Text(nonempty=True),
             'operations': Sequence(Structure({
-                    'operation': Token(segments=2, nonempty=False),
-                    'parameters': Field(),
-            }), nonempty=True),
+                'operation': Token(segments=2, nonempty=False),
+                'parameters': Field(),
+            }), min_length=1, nonempty=True),
         }
         responses = {
             OK: Response({
