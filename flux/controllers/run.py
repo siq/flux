@@ -43,7 +43,6 @@ class RunController(ModelController):
 
         task = data['task']
         if task == 'initiate-run':
-            subject.started = current_timestamp()
             subject.initiate(session)
             session.commit()
 

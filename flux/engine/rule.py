@@ -15,9 +15,10 @@ class Environment(object):
 class Condition(Element):
     """A rule condition."""
 
-    #schema = Union(Text(nonempty=True), Map(Field(), nonempty=True),
-    #    name='condition')
-    schema = Map(Field(), nonnull=True, name='condition')
+    schema = Text(nonnull=True, name='condition')
+
+    def evaluate(self, session, environment):
+        return environment.interpolator.evaluate(self.condition)
 
 class Rule(Element):
     """A workflow rule."""
@@ -31,10 +32,10 @@ class Rule(Element):
 
     def evaluate(self, session, environment):
         condition = self.condition
-        if not condition:
+        if condition:
+            return condition.evaluate(session, environment)
+        else:
             return True
-
-        return True
 
     def execute(self, session, environment):
         actions = self.actions

@@ -3,6 +3,7 @@ from spire.support.logs import LogHelper
 
 from flux.engine.rule import RuleList
 from flux.engine.step import Step
+from flux.exceptions import *
 
 log = LogHelper('flux')
 
@@ -20,5 +21,9 @@ class Workflow(Element):
     }, key_order='name entry prerun postrun preoperation postoperation steps')
 
     def initiate(self, session, run):
-        step = self.steps[self.entry]
-        step.initiate(session, run)
+        log('info', 'initiating %r', run)
+        try:
+            self.steps[self.entry].initiate(session, run)
+        except Exception:
+            log('exception', 'initiation of %r failed due to exception', run)
+            run.complete(session, 'failed')

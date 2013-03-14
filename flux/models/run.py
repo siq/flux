@@ -34,6 +34,9 @@ class Run(Model):
         cascade='all,delete-orphan', passive_deletes=True,
         order_by=WorkflowExecution.execution_id)
 
+    def __repr__(self):
+        return 'Run(id=%r, name=%r, status=%r)' % (self.id, self.name, self.status)
+
     @property
     def next_execution_id(self):
         return len(self.executions) + 1
@@ -74,5 +77,5 @@ class Run(Model):
             ancestor=ancestor, step=step, name=name, parameters=parameters)
 
     def initiate(self, session):
-        workflow = self.workflow.workflow
-        workflow.initiate(session, self)
+        self.started = current_timestamp()
+        self.workflow.workflow.initiate(session, self)
