@@ -41,8 +41,6 @@ class WorkflowController(ModelController):
                         'step': new_step_name,
                         'parameters': new_step['parameters'],
                     }],
-                    'condition': {},
-                    'description': '',
                     'terminal': False,
                 }]
 
