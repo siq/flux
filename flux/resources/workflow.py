@@ -10,7 +10,7 @@ class Workflow(Resource):
 
     class schema:
         id = UUID(nonnull=True, oncreate=True, operators='equal')
-        name = Text(nonempty=True, operators='equal')
+        name = Text(nonempty=True, operators='equal icontains')
         designation = Token(operators='equal')
         specification = Text(nonempty=True)
         modified = DateTime(utc=True, readonly=True)
