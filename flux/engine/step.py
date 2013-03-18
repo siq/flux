@@ -87,5 +87,4 @@ class Step(Element):
             interpolator.merge(execution.contribute_values())
         if values:
             interpolator.merge(values)
-        print interpolator
         return interpolator
