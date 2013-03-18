@@ -49,6 +49,10 @@ class Workflow(Model):
 
     @classmethod
     def create(cls, session, **attrs):
+        specification = attrs.get('specification')
+        if specification is not None:
+            schema = WorkflowElement.unserialize(specification)
+
         subject = cls(modified=current_timestamp(), **attrs)
         session.add(subject)
         return subject
