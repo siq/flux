@@ -37,13 +37,16 @@ class Step(Element):
         if parameters:
             recursive_merge(params, parameters)
 
+        execution = run.create_execution(session, self.name, ancestor=ancestor)
+        session.flush()
+
         if params:
-            interpolator = self._construct_interpolator(run=run, values=values)
+            interpolator = self._construct_interpolator(run, execution, values)
             params = interpolator.interpolate(operation.schema, params)
         else:
             params = None
-        
-        execution = run.create_execution(session, self.name, params, ancestor)
+
+        execution.start(params)
         session.commit()
 
         operation.initiate(id=execution.id, tag=self.name, input=params, timeout=self.timeout)
@@ -84,4 +87,5 @@ class Step(Element):
             interpolator.merge(execution.contribute_values())
         if values:
             interpolator.merge(values)
+        print interpolator
         return interpolator

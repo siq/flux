@@ -35,11 +35,12 @@ class WorkflowExecution(Model):
 
     def contribute_values(self):
         step = self.extract_dict('id execution_id step name status started ended')
+        step['serial'] = self.execution_id
         return {'step': step}
 
     @classmethod
     def create(cls, session, **attrs):
-        execution = cls(started=current_timestamp(), **attrs)
+        execution = cls(**attrs)
         session.add(execution)
         return execution
 
@@ -51,6 +52,11 @@ class WorkflowExecution(Model):
         step = workflow.steps[self.step]
 
         step.complete(session, self, workflow, output)
+
+    def start(self, parameters=None):
+        self.started = current_timestamp()
+        if parameters:
+            self.parameters = parameters
 
     def update_progress(self, session, progress):
         # TODO: handle progress_update
