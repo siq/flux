@@ -63,6 +63,11 @@ class Step(Element):
 
         interpolator = self._construct_interpolator(run, execution)
         if output:
+            #TODO: handle in postoperation
+            if output['outcome'] == 'failure':
+                execution.status = 'failed'
+                run.complete(session, 'failed')
+                return
             interpolator['step']['out'] = output
 
         environment = Environment(workflow, run, interpolator, output, execution)
