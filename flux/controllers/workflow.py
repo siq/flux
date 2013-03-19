@@ -32,13 +32,14 @@ class WorkflowController(ModelController):
             new_step_name = 'step:%s' % i
             new_step = {
                 'operation': op['operation'],
-                'parameters': op['parameters'],
+                'parameters': op['run_params'],
             }
             if step_name:
                 steps[step_name]['postoperation'] = [{
                     'actions': [{
                         'action': 'execute-step',
                         'step': new_step_name,
+                        'parameters': op['step_params'],
                     }],
                     'terminal': False,
                 }]

@@ -25,7 +25,8 @@ class Workflow(Resource):
             'name': Text(nonempty=True),
             'operations': Sequence(Structure({
                 'operation': Token(segments=2, nonempty=False),
-                'parameters': Field(),
+                'run_params': Field(),
+                'step_params': Field(),
             }), min_length=1, nonempty=True),
         }
         responses = {
