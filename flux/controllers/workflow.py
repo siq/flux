@@ -39,7 +39,6 @@ class WorkflowController(ModelController):
                     'actions': [{
                         'action': 'execute-step',
                         'step': new_step_name,
-                        'parameters': new_step['parameters'],
                     }],
                     'terminal': False,
                 }]
