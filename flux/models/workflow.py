@@ -49,14 +49,17 @@ class Workflow(Model):
 
     @classmethod
     def create(cls, session, **attrs):
-        specification = attrs.get('specification')
-        if specification is not None:
-            schema = WorkflowElement.unserialize(specification)
-
+        cls._verify_specification(attrs.get('specification'))
         subject = cls(modified=current_timestamp(), **attrs)
         session.add(subject)
         return subject
 
     def update(self, session, **attrs):
+        self._verify_specification(attrs.get('specification'))
         self.update_with_mapping(attrs, ignore='id')
         self.modified = current_timestamp()
+
+    @classmethod
+    def _verify_specification(cls, specification):
+        if specification is not None:
+            schema = WorkflowElement.unserialize(specification)
