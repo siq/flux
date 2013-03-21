@@ -3,11 +3,8 @@ from mesh.standard import bind
 from spire.mesh import ModelController, MeshDependency
 from spire.schema import SchemaDependency
 
-from flux.bindings import platoon
 from flux.models import WorkflowExecution as WorkflowExecutionModel
 from flux.resources import Execution
-
-Process = bind(platoon, 'platoon/1.0/process')
 
 class ExecutionController(ModelController):
     """A step execution controller"""
@@ -18,16 +15,17 @@ class ExecutionController(ModelController):
     version = (1, 0)
 
     platoon = MeshDependency('platoon')
+    docket_entity = MeshDependency('docket.entity')
 
     def update(self, request, response, subject, data):
+        session = self.schema.session
         subject.update_with_mapping(**data)
-        self.schema.session.commit()
+        session.commit()
 
-        try:
-            process = Process.get(subject.id)
-        except GoneError:
-            pass
-        else:
-            process.update(None, status=subject.status)
+        if subject.status == 'aborted':
+            subject.abort(session)
+            Run = self.docket_entity.bind('docket.entity/1.0/flux/1.0/run')
+            run = Run.get(subject.run_id)
+            run.update({'status': 'aborted'})
 
         response({'id': subject.id})

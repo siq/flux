@@ -1,11 +1,15 @@
+from mesh.standard import bind
 from scheme import current_timestamp
 from spire.schema import *
 
+from flux.bindings import platoon
 from flux.constants import *
+
+__all__ = ('WorkflowExecution',)
 
 schema = Schema('flux')
 
-__all__ = ('WorkflowExecution',)
+Process = bind(platoon, 'platoon/1.0/process')
 
 class WorkflowExecution(Model):
     """A step execution."""
@@ -34,9 +38,20 @@ class WorkflowExecution(Model):
     def workflow(self):
         return self.run.workflow
 
+    def abort(self, session):
+        self.status = 'aborted'
+        self.ended = current_timestamp()
+        try:
+            process = Process.get(self.id)
+        except GoneError:
+            pass
+        else:
+            process.update({'status': 'aborted'})
+
     def complete(self, session, outcome):
         self.status = 'completed'
         self.outcome = outcome
+        #self.ended = current_timestamp()
 
     def contribute_values(self):
         step = self.extract_dict('id execution_id step name status outcome started ended')

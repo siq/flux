@@ -33,6 +33,19 @@ class RunController(ModelController):
 
         return subject
 
+    @support_returning
+    def update(self, request, response, subject, data):
+        session = self.schema.session
+        subject.update_with_mapping(**data)
+        session.commit()
+
+        if subject.status == 'aborted':
+            ScheduledTask.queue_http_task('abort-run',
+                self.flux.prepare('flux/1.0/run', 'task', None,
+                {'task': 'abort-run', 'id': subject.id}))
+
+        return subject
+
     def task(self, request, response, subject, data):
         session = self.schema.session
         if 'id' in data:
@@ -44,6 +57,10 @@ class RunController(ModelController):
         task = data['task']
         if task == 'initiate-run':
             subject.initiate(session)
+            session.commit()
+
+        elif task == 'abort-run':
+            subject.abort(session)
             session.commit()
 
     def _annotate_resource(self, request, model, resource, data):

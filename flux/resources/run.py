@@ -32,17 +32,23 @@ class Run(Resource):
     class create(Resource.create):
         support_returning = True
 
+    class update(Resource.update):
+        status = Enumeration('aborted', nonempty=True)
+
     class task:
         endpoint = ('TASK', 'run')
         title = 'Initiating a run task'
         schema = Structure(
             structure={
+                'abort-run': {
+                    'id': UUID(nonempty=True),
+                },
                 'initiate-run': {
                     'id': UUID(nonempty=True),
                 },
             },
             nonempty=True,
-            polymorphic_on=Enumeration(['initiate-run'],
+            polymorphic_on=Enumeration(['abort-run', 'initiate-run'],
                 name='task', nonempty=True))
         responses = {
             OK: Response(),
