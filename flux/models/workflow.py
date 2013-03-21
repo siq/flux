@@ -36,7 +36,7 @@ class Workflow(Model):
     cache = WorkflowCache()
 
     id = Identifier()
-    name = Text(nullable=False)
+    name = Text(unique=True, nullable=False)
     designation = Token(unique=True)
     specification = Text(nullable=False)
     modified = DateTime(timezone=True)

@@ -1,5 +1,6 @@
+from mesh.exceptions import OperationError
 from spire.mesh import ModelController, support_returning
-from spire.schema import SchemaDependency
+from spire.schema import SchemaDependency, IntegrityError
 
 from flux.models import *
 from flux.resources import Workflow as WorkflowResource
@@ -18,7 +19,10 @@ class WorkflowController(ModelController):
         session = self.schema.session
         subject = self.model.create(session, **data)
 
-        session.commit()
+        try:
+            session.commit()
+        except IntegrityError:
+            raise OperationError(token='duplicate-workflow-name')
         return subject
 
     def generate(self, request, response, subject, data):
@@ -61,5 +65,8 @@ class WorkflowController(ModelController):
         session = self.schema.session
         subject.update(session, **data)
 
-        session.commit()
+        try:
+            session.commit()
+        except IntegrityError:
+            raise OperationError(token='duplicate-workflow-name')
         return subject
