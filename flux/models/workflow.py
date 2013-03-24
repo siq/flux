@@ -1,3 +1,4 @@
+from mesh.exceptions import OperationError
 from scheme import current_timestamp
 from spire.schema import *
 from sqlalchemy.orm.collections import attribute_mapped_collection
@@ -61,5 +62,35 @@ class Workflow(Model):
 
     @classmethod
     def _verify_specification(cls, specification):
-        if specification is not None:
-            schema = WorkflowElement.unserialize(specification)
+        if specification is None:
+            return
+
+        schema = WorkflowElement.unserialize(specification)
+        steps = schema.steps
+
+        if schema.entry not in steps:
+            raise OperationError(token='invalid-entry-step')
+        if schema.preoperation:
+            cls._verify_rulelist(schema.preoperation.rules, steps)
+        if schema.postoperation:
+            cls._verify_rulelist(schema.postoperation.rules, steps)
+        if schema.prerun:
+            cls._verify_rulelist(schema.prerun.rules, steps)
+        if schema.postrun:
+            cls._verify_rulelist(schema.postrun.rules, steps)
+
+        for name, step in steps.iteritems():
+            rules = []
+            if step.preoperation:
+                rules += step.preoperation.rules
+            if step.postoperation:
+                rules += step.postoperation.rules
+            cls._verify_rulelist(rules, steps)
+
+    @classmethod
+    def _verify_rulelist(cls, rulelist, steps):
+        for rule in rulelist:
+            for action in rule.actions:
+                if action.action == 'execute-step':
+                    if action.step not in steps:
+                        raise OperationError('invalid-execute-step')
