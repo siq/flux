@@ -37,7 +37,8 @@ class Step(Element):
         if parameters:
             recursive_merge(params, parameters)
 
-        execution = run.create_execution(session, self.name, ancestor=ancestor)
+        execution = run.create_execution(session, self.name, ancestor=ancestor,
+                name=operation.name)
         session.flush()
 
         if params:
