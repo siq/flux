@@ -51,26 +51,39 @@ class Step(Element):
 
         operation.initiate(id=execution.id, tag=self.name, input=params, timeout=self.timeout)
 
-    def complete(self, session, execution, workflow, output):
+    def process(self, session, execution, workflow, status, output):
         from flux.models import Run
         run = Run.load(session, id=execution.run_id, lockmode='update')
 
-        status = execution.status
-        if status != 'completed':
-            if status in ('failed', 'timedout'):
-                run.complete(session, status)
-            return
+        values = None
+        operation = session.query(Operation).get(self.operation)
+
+        if status == 'completed':
+            if output['status'] == 'valid':
+                status, outcome, values = self._parse_outcome(operation, output)
+                if status == 'completed':
+                    execution.complete(session, outcome)
+                else:
+                    execution.fail(session, outcome)
+            elif output['status'] == 'invalid':
+                execution.invalidate(session, output['errors'])
+                return run.invalidate(session)
+        elif status == 'failed':
+            execution.fail(session)
+        elif status == 'timedout':
+            execution.timeout(session)
+
+        # temporary hack
+        if execution.status == 'failed':
+            return run.fail(session)
+        elif execution.status == 'timedout':
+            return run.timeout(session)
 
         interpolator = self._construct_interpolator(run, execution)
-        if output:
-            #TODO: handle in postoperation
-            if output['outcome'] == 'failure':
-                execution.status = 'failed'
-                run.complete(session, 'failed')
-                return
-            interpolator['step']['out'] = output
+        if values:
+            interpolator['step']['out'] = values
 
-        environment = Environment(workflow, run, interpolator, output, execution)
+        environment = Environment(workflow, run, interpolator, values, execution)
 
         postoperation = self.postoperation
         if postoperation:
@@ -82,7 +95,7 @@ class Step(Element):
             WorkflowExecution.status!='completed').scalar()
 
         if not active_executions:
-            run.complete(session, 'completed')
+            run.complete(session)
 
     def _construct_interpolator(self, run=None, execution=None, values=None):
         interpolator = Interpolator()
@@ -93,3 +106,19 @@ class Step(Element):
         if values:
             interpolator.merge(values)
         return interpolator
+
+    def _parse_outcome(self, operation, output):
+        try:
+            outcome = operation.outcomes[output['outcome']]
+        except KeyError:
+            raise # todo: handle this properly
+
+        values = output.get('values')
+        if values:
+            pass # todo: validate using schema here
+        else:
+            values = {}
+
+        status = ('completed' if outcome.outcome == 'success' else 'failed')
+        return status, outcome.name, values
+

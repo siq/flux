@@ -27,9 +27,9 @@ class TestOperation(Operation):
         id = data['state']['id']
         input = data['state'].get('input') or {}
 
-        outcome = input.get('outcome', 'completed')
-        if outcome == 'completed':
-            self.push(id, status='completed', output={'outcome': 'completed'})
+        expected_outcome = input.get('outcome', 'completed')
+        if expected_outcome == 'completed':
+            self.push(id, outcome('completed'))
 
     def initiate(self, session, data):
         input = data.get('input') or {}
@@ -38,4 +38,4 @@ class TestOperation(Operation):
                 {'task': 'complete-test-operation', 'state': data}),
             delta = input.get('duration', 5))
 
-        return {'status': 'executing'}
+        return executing()

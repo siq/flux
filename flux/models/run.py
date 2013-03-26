@@ -41,14 +41,8 @@ class Run(Model):
     def next_execution_id(self):
         return len(self.executions) + 1
 
-    def complete(self, session, status):
-        self.status = status
-        self.ended = current_timestamp()
-
-        try:
-            Event.create(topic='run:changed', aspects={'id': self.id})
-        except Exception:
-            log('exception', 'failed to file run:changed event')
+    def complete(self, session):
+        self._end_run(session, 'completed')
 
     def contribute_values(self):
         run = {'id': self.id, 'name': self.name, 'started': self.started}
@@ -76,6 +70,24 @@ class Run(Model):
         return WorkflowExecution.create(session, run_id=self.id, execution_id=self.next_execution_id,
             ancestor=ancestor, step=step, name=name, parameters=parameters)
 
+    def fail(self, session):
+        self._end_run(session, 'failed')
+
     def initiate(self, session):
         self.started = current_timestamp()
         self.workflow.workflow.initiate(session, self)
+
+    def invalidate(self, session):
+        self._end_run(session, 'invalidated')
+
+    def timeout(self, session):
+        self._end_run(session, 'timedout')
+
+    def _end_run(self, session, status):
+        self.status = status
+        self.ended = current_timestamp()
+
+        try:
+            Event.create(topic='run:changed', aspects={'id': self.id})
+        except Exception:
+            log('exception', 'failed to fire run:changed event')

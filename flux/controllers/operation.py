@@ -43,9 +43,9 @@ class OperationController(ModelController):
             return # todo: address exception properly
 
         status = data['status']
-        if status in ('completed', 'failed', 'timedout',):
-            execution.complete(session, status, data.get('output'))
-        elif status == 'progress':
+        if status in ('completed', 'failed', 'timedout'):
+            execution.process(session, status, data.get('output'))
+        elif status == 'executing':
             execution.update_progress(session, data.get('progress'))
 
         session.commit()

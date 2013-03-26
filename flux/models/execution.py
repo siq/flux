@@ -22,6 +22,7 @@ class WorkflowExecution(Model):
     step = Token(nullable=False)
     name = Text()
     status = Enumeration(RUN_STATUSES, nullable=False, default='pending')
+    outcome = Token()
     started = DateTime(timezone=True)
     ended = DateTime(timezone=True)
     parameters = Json()
@@ -33,8 +34,12 @@ class WorkflowExecution(Model):
     def workflow(self):
         return self.run.workflow
 
+    def complete(self, session, outcome):
+        self.status = 'completed'
+        self.outcome = outcome
+
     def contribute_values(self):
-        step = self.extract_dict('id execution_id step name status started ended')
+        step = self.extract_dict('id execution_id step name status outcome started ended')
         step['serial'] = self.execution_id
         return {'step': step}
 
@@ -44,20 +49,29 @@ class WorkflowExecution(Model):
         session.add(execution)
         return execution
 
-    def complete(self, session, status, output):
-        self.ended = current_timestamp()
-        self.status = status
+    def fail(self, session, outcome=None):
+        self.status = 'failed'
+        if outcome:
+            self.outcome = outcome
 
+    def invalidate(self, session, errors):
+        self.status = 'invalidated'
+
+    def process(self, session, status, output):
         workflow = self.workflow.workflow
         step = workflow.steps[self.step]
 
-        step.complete(session, self, workflow, output)
+        self.ended = current_timestamp()
+        step.process(session, self, workflow, status, output)
 
     def start(self, parameters=None):
         self.started = current_timestamp()
         if parameters:
             self.parameters = parameters
 
+    def timeout(self, session):
+        self.status = 'timedout'
+
     def update_progress(self, session, progress):
+        pass
         # TODO: handle progress_update
-        self.status = 'executing'
