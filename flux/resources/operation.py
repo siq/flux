@@ -22,7 +22,7 @@ class Operation(Resource):
         phase = Enumeration(OPERATION_PHASES, nonempty=True, operators='equal')
         description = Text()
         schema = Definition()
-        parameters = Map(Field(), nonnull=True)
+        parameters = Map(Field())
         outcomes = Map(Outcome, nonempty=True)
 
     class operation:
