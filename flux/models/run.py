@@ -67,6 +67,7 @@ class Run(Model):
         return run
 
     def create_execution(self, session, step, parameters=None, ancestor=None, name=None):
+        session.expire(self)
         return WorkflowExecution.create(session, run_id=self.id, execution_id=self.next_execution_id,
             ancestor=ancestor, step=step, name=name, parameters=parameters)
 
