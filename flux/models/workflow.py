@@ -61,6 +61,14 @@ class Workflow(Model):
         self.modified = current_timestamp()
 
     @classmethod
+    def _verify_rulelist(cls, rulelist, steps):
+        for rule in rulelist:
+            for action in rule.actions:
+                if action.action == 'execute-step':
+                    if action.step not in steps:
+                        raise OperationError('invalid-execute-step')
+
+    @classmethod
     def _verify_specification(cls, specification):
         if specification is None:
             return
@@ -86,11 +94,3 @@ class Workflow(Model):
             if step.postoperation:
                 rules += step.postoperation.rules
             cls._verify_rulelist(rules, steps)
-
-    @classmethod
-    def _verify_rulelist(cls, rulelist, steps):
-        for rule in rulelist:
-            for action in rule.actions:
-                if action.action == 'execute-step':
-                    if action.step not in steps:
-                        raise OperationError('invalid-execute-step')
