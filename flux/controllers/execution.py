@@ -14,17 +14,18 @@ class ExecutionController(ModelController):
     schema = SchemaDependency('flux')
     version = (1, 0)
 
+    flux = MeshDependency('flux')
     platoon = MeshDependency('platoon')
-    docket_entity = MeshDependency('docket.entity')
 
     def update(self, request, response, subject, data):
         session = self.schema.session
-        subject.update_with_mapping(**data)
-        session.commit()
 
-        if subject.status == 'aborted':
+        status = data.pop('status')
+        if status == 'aborted' and subject.status in ('active', 'pending', 'waiting'):
             subject.abort(session)
-            Run = self.docket_entity.bind('docket.entity/1.0/flux/1.0/run')
+            session.commit()
+
+            Run = self.flux.bind('flux/1.0/run')
             run = Run.get(subject.run_id)
             run.update({'status': 'aborted'})
 

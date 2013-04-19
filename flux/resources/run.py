@@ -40,7 +40,7 @@ class Run(Resource):
         title = 'Initiating a run task'
         schema = Structure(
             structure={
-                'abort-run': {
+                'abort-executions': {
                     'id': UUID(nonempty=True),
                 },
                 'initiate-run': {
@@ -48,7 +48,7 @@ class Run(Resource):
                 },
             },
             nonempty=True,
-            polymorphic_on=Enumeration(['abort-run', 'initiate-run'],
+            polymorphic_on=Enumeration(['abort-executions', 'initiate-run'],
                 name='task', nonempty=True))
         responses = {
             OK: Response(),

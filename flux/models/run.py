@@ -41,9 +41,9 @@ class Run(Model):
     def next_execution_id(self):
         return len(self.executions) + 1
 
-    def abort(self, session):
-        self.status = 'aborted'
-        self.ended = current_timestamp()
+    def abort_executions(self, session):
+        #self.status = 'aborted'
+        #self.ended = current_timestamp()
         # lock rows??
         active_executions = session.query(WorkflowExecution).filter(
             WorkflowExecution.run_id==self.id,
@@ -54,7 +54,6 @@ class Run(Model):
 
     def complete(self, session):
         self._end_run(session, 'completed')
-        #self.ended = current_timestamp()
 
     def contribute_values(self):
         run = {'id': self.id, 'name': self.name, 'started': self.started}

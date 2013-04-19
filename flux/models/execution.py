@@ -1,3 +1,4 @@
+from mesh.exceptions import GoneError
 from mesh.standard import bind
 from scheme import current_timestamp
 from spire.schema import *
@@ -51,7 +52,6 @@ class WorkflowExecution(Model):
     def complete(self, session, outcome):
         self.status = 'completed'
         self.outcome = outcome
-        #self.ended = current_timestamp()
 
     def contribute_values(self):
         step = self.extract_dict('id execution_id step name status outcome started ended')
