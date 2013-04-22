@@ -13,6 +13,18 @@ class Workflow(Resource):
         name = Text(nonempty=True, operators='equal icontains')
         designation = Token(operators='equal')
         specification = Text(nonempty=True)
+        form = Structure({
+            'schema': Definition(nonempty=True),
+            'layout': Sequence(Structure({
+                'title': Text(),
+                'elements': Sequence(Structure({
+                    'type': Token(nonempty=True),
+                    'field': Token(nonempty=True),
+                    'label': Text(),
+                    'options': Field(),
+                })),
+            }), nonempty=True),
+        }, deferred=True, readonly=True)
         modified = DateTime(utc=True, readonly=True)
 
     class create(Resource.create):
