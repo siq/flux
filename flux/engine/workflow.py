@@ -1,3 +1,4 @@
+from mesh.exceptions import OperationError
 from scheme import *
 from spire.support.logs import LogHelper
 
@@ -27,3 +28,17 @@ class Workflow(Element):
         except Exception:
             log('exception', 'initiation of %r failed due to exception', run)
             run.complete(session, 'failed')
+
+    def verify(self):
+        steps = self.steps
+
+        if self.entry not in steps:
+            raise OperationError(token='invalid-entry-step')
+
+        for rulelist in ('preoperation', 'postoperation', 'prerun', 'postrun'):
+            element = getattr(self, rulelist, None)
+            if element:
+                element.verify(steps)
+                
+        for step in steps.itervalues():
+            step.verify(steps)

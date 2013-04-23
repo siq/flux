@@ -1,3 +1,4 @@
+from mesh.exceptions import OperationError
 from scheme import *
 
 from flux.engine.action import Action
@@ -45,6 +46,12 @@ class Rule(Element):
         for action in actions:
             action.execute(session, environment)
 
+    def verify(self, steps):
+        for action in self.actions:
+            if action.action == 'execute-step':
+                if action.step not in steps:
+                    raise OperationError('invalid-execute-step')
+
 class RuleList(Element):
     """A workflow rule list."""
 
@@ -56,3 +63,7 @@ class RuleList(Element):
                 rule.execute(session, environment)
                 if rule.terminal:
                     break
+
+    def verify(self, steps):
+        for rule in self.rules:
+            rule.verify(steps)

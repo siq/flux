@@ -98,6 +98,12 @@ class Step(Element):
         if not active_executions:
             run.complete(session)
 
+    def verify(self, steps):
+        for rulelist in ('preoperation', 'postoperation'):
+            element = getattr(self, rulelist, None)
+            if element:
+                element.verify(steps)
+
     def _construct_interpolator(self, run=None, execution=None, values=None):
         interpolator = Interpolator()
         if run:
