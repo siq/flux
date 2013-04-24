@@ -71,8 +71,8 @@ class TestParamsSpecification(BaseTestCase):
         """Tests verification of valid parameters"""
         specification = '\n'.join([
             'schema:',
-           '  fieldtype: structure',
-           '  structure:',
+            '  fieldtype: structure',
+            '  structure:',
             '    test_field:',
             '      name: test_field1',
             '      fieldtype: text',
@@ -97,34 +97,20 @@ class TestSpecification(BaseTestCase):
             'step-2': None,
             'step-3': None,
         }
-        specification = 
-        rulelist = RuleList.unserialize(json.dumps([
-            {
-                'actions': [
-                    {
-                        'action': 'execute-step',
-                        'step': 'step-1',
-                    },
-                    {
-                        'action': 'execute-step',
-                        'step': 'step-2',
-                    },
-                    {
-                        'action': 'execute-operation',
-                        'operation': 'test-operation',
-                    },
-                ],
-                'condition': 'some condition',
-            },
-            {
-                'actions': [
-                    {
-                        'action': 'execute-step',
-                        'step': 'step-3',
-                    },
-                ],
-            },
-        ]))
+        specification = '\n'.join([
+            '- actions:',
+            '  - action: execute-step',
+            '    step: step-1',
+            '  - action: execute-step',
+            '    step: step-2',
+            '  - action: execute-operation',
+            '    operation: flux:test-operation',
+            '  condition: some condition',
+            '- actions:',
+            '  - action: execute-step',
+            '    step: step-3',
+        ])
+        rulelist = RuleList.unserialize(specification)
         rulelist.verify(steps)
 
     def test_workflow_verify_rulelist_fail(self, client):
@@ -133,33 +119,20 @@ class TestSpecification(BaseTestCase):
             'step-1': None,
             'step-2': None,
         }
-        rulelist = RuleList.unserialize(json.dumps([
-            {
-                'actions': [
-                    {
-                        'action': 'execute-step',
-                        'step': 'step-1',
-                    },
-                    {
-                        'action': 'execute-step',
-                        'step': 'step-3',
-                    },
-                    {
-                        'action': 'execute-operation',
-                        'operation': 'flux:test-operation',
-                    },
-                ],
-                'condition': 'some condition',
-            },
-            {
-                'actions': [
-                    {
-                        'action': 'execute-step',
-                        'step': 'step-2',
-                    },
-                ],
-            },
-        ]))
+        specification = '\n'.join([
+            '- actions:',
+            '  - action: execute-step',
+            '    step: step-1',
+            '  - action: execute-step',
+            '    step: step-3',
+            '  - action: execute-operation',
+            '    operation: flux:test-operation',
+            '  condition: some condition',
+            '- actions:',
+            '  - action: execute-step',
+            '    step: step-2',
+        ])
+        rulelist = RuleList.unserialize(specification)
         with self.assertRaises(OperationError):
             rulelist.verify(steps)
 
