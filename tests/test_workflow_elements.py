@@ -1,5 +1,6 @@
 import json
 
+from scheme.fields import Structure, Text
 from mesh.exceptions import OperationError
 from mesh.testing import MeshTestCase
 from spire.core import adhoc_configure, Unit
@@ -7,6 +8,7 @@ from spire.mesh import MeshDependency
 from spire.schema import SchemaDependency
 
 from flux.bundles import API
+from flux.engine.parameter import Parameter
 from flux.engine.rule import RuleList
 from flux.models import Run, Workflow
 from nose import SkipTest
@@ -66,24 +68,26 @@ class BaseTestCase(MeshTestCase):
 
 class TestParamsSpecification(BaseTestCase):
     def test_parse_valid_params(self, client):
-        raise SkipTest
+        """Tests verification of valid parameters"""
         specification = '\n'.join([
-            'parameters:',
-            ' schema:',
-            '   name: test_field1',
-            '     fieldtype: Text',
-            '     required: true',
-            ' layout:',
-            '   - title: Test Section 1',
-            '     elements:',
-            '       - type: textbox',
-            '         field: test_field1',
-            '         label: Test Field #1',
-            '         options:',
-            '           multiline: true',
+            'schema:',
+           '  fieldtype: structure',
+           '  structure:',
+            '    test_field:',
+            '      name: test_field1',
+            '      fieldtype: text',
+            '      required: true',
+            'layout:',
+            '  - title: Test Section 1',
+            '    elements:',
+            '      - type: textbox',
+            '        field: test_field1',
+            '        label: Test Field #1',
+            '        options:',
+            '          multiline: true',
         ])
-
-        #Workflow.
+        parameters = Parameter.unserialize(specification)
+        parameters.verify()
 
 class TestSpecification(BaseTestCase):
     def test_workflow_verify_rulelist_pass(self, client):
@@ -93,6 +97,7 @@ class TestSpecification(BaseTestCase):
             'step-2': None,
             'step-3': None,
         }
+        specification = 
         rulelist = RuleList.unserialize(json.dumps([
             {
                 'actions': [
