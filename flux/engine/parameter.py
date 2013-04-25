@@ -1,8 +1,6 @@
+from copy import deepcopy
 from mesh.exceptions import OperationError
 from scheme import *
-
-from flux.engine.interpolation import Interpolator
-from flux.models import Operation
 
 class Parameter(Element):
     """A workflow parameter."""
@@ -18,21 +16,27 @@ class Parameter(Element):
                 'options': Field(),
             })),
         })),
-    })
+    }, nonnull=True)
+
+    def extract_dict(self):
+        schema = self.__class__.schema
+        return self.extract(schema, self)
 
     def verify(self):
-        layout = self.layout
-        schema = self.schema
-        elements = reduce(lambda x,y: x+y, [l['elements']  for l in layout])
-        fields = {field.name: field for field in schema.structure.itervalues()}
+        layout = deepcopy(self.layout)
+        fields = deepcopy(self.schema.structure)
+        elements = reduce(lambda x, y: x + y, [l['elements']  for l in layout])
 
-        while elements and fields:
-            element = elements.pop()
-            fields.pop(element['field'])
+        for i, element in enumerate(elements[:]):
+            if fields.pop(element['field'], False):
+                elements.pop(i)
 
-        # TODO: elaborate
-        if elements:
-            raise OperationError(token='some error')
+        errors = {}
+        for element in elements:
+            errors[element['field']] = OperationError(token='no-field-layout')
 
-        if fields:
-            raise OperationError(token='some error')
+        for field in fields.iterkeys():
+            errors[field] = OperationError(token='no-element-schema')
+
+        if errors:
+             raise OperationError(structure=errors)

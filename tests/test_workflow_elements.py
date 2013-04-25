@@ -73,8 +73,7 @@ class TestParamsSpecification(BaseTestCase):
             'schema:',
             '  fieldtype: structure',
             '  structure:',
-            '    test_field:',
-            '      name: test_field1',
+            '    test_field1:',
             '      fieldtype: text',
             '      required: true',
             'layout:',
@@ -88,6 +87,37 @@ class TestParamsSpecification(BaseTestCase):
         ])
         parameters = Parameter.unserialize(specification)
         parameters.verify()
+
+    def test_missing_schema_field(self, client):
+        """Tests failure when schema field is missing"""
+        specification = '\n'.join([
+            'schema:',
+            '  fieldtype: structure',
+            '  structure:',
+            '    test_field1:',
+            '      fieldtype: text',
+            '      required: true',
+            '    test_field2:',
+            '      fieldtype: integer',
+            '      required: true',
+            'layout:',
+            '  - title: Test Section 1',
+            '    elements:',
+            '      - type: textbox',
+            '        field: test_field1',
+            '        label: Test Field #1',
+            '        options:',
+            '          multiline: true',
+            '      - type: textbox',
+            '        field: test_field2',
+            '        label: Test Field #2',
+            '      - type: checkbox',
+            '        field: test_field3',
+            '        label: Test Field #3',
+        ])
+        parameters = Parameter.unserialize(specification)
+        with self.assertRaises(OperationError):
+            parameters.verify()
 
 class TestSpecification(BaseTestCase):
     def test_workflow_verify_rulelist_pass(self, client):
@@ -141,26 +171,41 @@ class TestSpecification(BaseTestCase):
         name = 'valid specification workflow'
         specification = '\n'.join([
             'name: %s' % name,
+            'parameters:',
+            '  schema:',
+            '    fieldtype: structure',
+            '    structure:',
+            '      some_test_arg:',
+            '        fieldtype: text',
+            '        required: true',
+            '  layout:',
+            '    - title: Test Section 1',
+            '      elements:',
+            '        - type: textbox',
+            '          field: some_test_arg',
+            '          label: Test Field #1',
+            '          options:',
+            '            multiline: true',
             'entry: step-0',
             'steps: ',
-            ' step-0:',
-            '  operation: flux:test-operation',
-            '  timeout: 30',
-            '  preoperation:',
-            '   - actions:',
-            '     - action: execute-step',
-            '       step: step-1',
-            '       parameters:',
-            '        arg1: ${some_test_arg}',
-            '        arg2: literal arg',
-            '  postoperation:',
-            '   - actions:',
-            '     - action: execute-operation',
-            '       operation: flux:test-operation',
-            '     condition: some condition',
-            '     terminal: false',
-            ' step-1:',
-            '  operation: flux:test-operation',
+            '  step-0:',
+            '    operation: flux:test-operation',
+            '    timeout: 30',
+            '    preoperation:',
+            '     - actions:',
+            '       - action: execute-step',
+            '         step: step-1',
+            '         parameters:',
+            '           arg1: ${some_test_arg}',
+            '           arg2: literal arg',
+            '    postoperation:',
+            '     - actions:',
+            '       - action: execute-operation',
+            '         operation: flux:test-operation',
+            '       condition: some condition',
+            '       terminal: false',
+            '  step-1:',
+            '     operation: flux:test-operation',
         ])
         Workflow._verify_specification(specification)
 
@@ -171,14 +216,14 @@ class TestSpecification(BaseTestCase):
             'name: %s' % name,
             'entry: non-existing-step',
             'steps: ',
-            ' step-0:',
-            '  operation: flux:test-operation',
-            '  postoperation:',
-            '   - actions:',
-            '     - action: execute-operation',
-            '       operation: flux:test-operation',
-            '     condition: some condition',
-            '     terminal: false',
+            '  step-0:',
+            '    operation: flux:test-operation',
+            '    postoperation:',
+            '     - actions:',
+            '       - action: execute-operation',
+            '         operation: flux:test-operation',
+            '       condition: some condition',
+            '       terminal: false',
         ])
         with self.assertRaises(OperationError):
             Workflow._verify_specification(specification)

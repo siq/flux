@@ -70,3 +70,15 @@ class WorkflowController(ModelController):
         except IntegrityError:
             raise OperationError(token='duplicate-workflow-name')
         return subject
+
+    def _annotate_resource(self, request, model, resource, data):
+        include = data and data.get('include')
+        if not include:
+            return
+
+        if 'form' in include:
+            parameters = model.workflow.parameters
+            if parameters:
+                resource['form'] = parameters.extract_dict()
+            else:
+                resource['form'] = None

@@ -21,7 +21,7 @@ class Workflow(Element):
         'postrun': RuleList.schema,
         'steps': Map(Step.schema, nonnull=True),
         'entry': Token(nonempty=True),
-    }, key_order='name entry prerun postrun preoperation postoperation steps')
+    }, key_order='name parameters entry prerun postrun preoperation postoperation steps')
 
     def initiate(self, session, run):
         log('info', 'initiating %r', run)
@@ -38,7 +38,7 @@ class Workflow(Element):
             raise OperationError(token='invalid-entry-step')
 
         if self.parameters:
-            self.parameters.verify(self)
+            self.parameters.verify()
 
         for rulelist in ('preoperation', 'postoperation', 'prerun', 'postrun'):
             element = getattr(self, rulelist, None)
