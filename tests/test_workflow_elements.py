@@ -8,10 +8,11 @@ from spire.mesh import MeshDependency
 from spire.schema import SchemaDependency
 
 from flux.bundles import API
-from flux.engine.parameter import Parameter
+from flux.engine.parameter import Parameter, reverse_enumerate
 from flux.engine.rule import RuleList
 from flux.models import Run, Workflow
 from nose import SkipTest
+from unittest import TestCase
 
 
 adhoc_configure({
@@ -227,3 +228,27 @@ class TestSpecification(BaseTestCase):
         ])
         with self.assertRaises(OperationError):
             Workflow._verify_specification(specification)
+
+
+class TestUtilities(TestCase):
+    """Test utility functions"""
+
+    def test_reversed_enumeration(self):
+        """Test basic reversed enumeration"""
+        test_list = range(10)
+        expected = [
+            (0, 9), (-1, 8), (-2, 7), (-3, 6), (-4, 5),
+            (-5, 4), (-6, 3), (-7, 2), (-8, 1), (-9, 0)
+        ]
+        result = [l for l in reverse_enumerate(test_list)]
+        self.assertEquals(expected, result)
+
+    def test_reversed_enumeration_option_params(self):
+        """Test reversed enumeration with optional start param"""
+        test_list = range(10)
+        expected = [
+            (9, 9), (8, 8), (7, 7), (6, 6), (5, 5),
+            (4, 4), (3, 3), (2, 2), (1, 1), (0, 0)
+        ]
+        result = [l for l in reverse_enumerate(test_list, 9)]
+        self.assertEquals(expected, result)

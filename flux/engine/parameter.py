@@ -1,6 +1,11 @@
-from copy import deepcopy
+from copy import copy, deepcopy
 from mesh.exceptions import OperationError
 from scheme import *
+
+def reverse_enumerate(iterable, start=0):
+    iterator = reversed(iterable)
+    for enum, val in enumerate(iterator):
+        yield start - enum, val
 
 class Parameter(Element):
     """A workflow parameter."""
@@ -27,7 +32,7 @@ class Parameter(Element):
         fields = deepcopy(self.schema.structure)
         elements = reduce(lambda x, y: x + y, [l['elements']  for l in layout])
 
-        for i, element in enumerate(elements[:]):
+        for i, element in reverse_enumerate(elements[:], len(elements) - 1):
             if fields.pop(element['field'], False):
                 elements.pop(i)
 
