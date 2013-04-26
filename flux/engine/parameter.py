@@ -1,4 +1,3 @@
-from copy import copy, deepcopy
 from mesh.exceptions import OperationError
 from scheme import *
 
@@ -28,8 +27,8 @@ class Parameter(Element):
         return self.extract(schema, self)
 
     def verify(self):
-        layout = deepcopy(self.layout)
-        fields = deepcopy(self.schema.structure)
+        layout = self.layout
+        fields = self.schema.clone().structure
         elements = reduce(lambda x, y: x + y, [l['elements']  for l in layout])
 
         for i, element in reverse_enumerate(elements[:], len(elements) - 1):
@@ -38,10 +37,10 @@ class Parameter(Element):
 
         errors = {}
         for element in elements:
-            errors[element['field']] = OperationError(token='no-field-layout')
+            errors[element['field']] = OperationError(token='no-matching-schema-field')
 
         for field in fields.iterkeys():
-            errors[field] = OperationError(token='no-element-schema')
+            errors[field] = OperationError(token='no-matching-layout-element')
 
         if errors:
              raise OperationError(structure=errors)
