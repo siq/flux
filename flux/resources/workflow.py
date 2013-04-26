@@ -35,6 +35,7 @@ class Workflow(Resource):
         title = 'Generate a workflow specification'
         schema = {
             'name': Text(nonempty=True),
+            'description': Text(),
             'operations': Sequence(Structure({
                 'operation': Token(segments=2, nonempty=False),
                 'run_params': Field(),
@@ -44,7 +45,8 @@ class Workflow(Resource):
         responses = {
             OK: Response({
                 'name': Text(nonempty=True),
-                'specification': Text(nonempty=True)
+                'specification': Text(nonempty=True),
+                'description': Text()
             }),
             INVALID: Response(Errors),
         }

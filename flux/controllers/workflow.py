@@ -27,6 +27,7 @@ class WorkflowController(ModelController):
 
     def generate(self, request, response, subject, data):
         name = data['name']
+        description = data.get('description', '')
         operations = data['operations']
         specification = {'name': name, 'entry': 'step:0'}
         steps = {}
@@ -55,7 +56,7 @@ class WorkflowController(ModelController):
         specification = WorkflowEngine.schema.serialize(specification,
                 format='yaml')
 
-        response({'name': name, 'specification': specification})
+        response({'name': name, 'specification': specification, 'description': description})
 
     @support_returning
     def update(self, request, response, subject, data):
