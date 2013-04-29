@@ -78,8 +78,8 @@ class WorkflowController(ModelController):
             return
 
         if 'form' in include:
-            parameters = model.workflow.parameters
-            if parameters:
-                resource['form'] = parameters.extract_dict()
+            form = model.workflow.form
+            if form:
+                resource['form'] = form.extract_dict()
             else:
                 resource['form'] = None

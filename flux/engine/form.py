@@ -6,8 +6,8 @@ def reverse_enumerate(iterable, start=0):
     for enum, val in enumerate(iterator):
         yield start - enum, val
 
-class Parameter(Element):
-    """A workflow parameter."""
+class Form(Element):
+    """A workflow form."""
 
     schema = Structure({
         'schema': Definition(),

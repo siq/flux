@@ -136,7 +136,7 @@ class TestWorkflow(BaseTestCase):
         name = 'test workflow form'
         specification = '\n'.join([
             'name: %s' % name,
-            'parameters:',
+            'form:',
             '  schema:',
             '    fieldtype: structure',
             '    structure:',

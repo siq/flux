@@ -8,7 +8,7 @@ from spire.mesh import MeshDependency
 from spire.schema import SchemaDependency
 
 from flux.bundles import API
-from flux.engine.parameter import Parameter, reverse_enumerate
+from flux.engine.form import Form, reverse_enumerate
 from flux.engine.rule import RuleList
 from flux.models import Run, Workflow
 from nose import SkipTest
@@ -68,8 +68,8 @@ class BaseTestCase(MeshTestCase):
 
 
 class TestParamsSpecification(BaseTestCase):
-    def test_parse_valid_params(self, client):
-        """Tests verification of valid parameters"""
+    def test_parse_valid_form(self, client):
+        """Tests verification of a valid form"""
         specification = '\n'.join([
             'schema:',
             '  fieldtype: structure',
@@ -86,8 +86,8 @@ class TestParamsSpecification(BaseTestCase):
             '        options:',
             '          multiline: true',
         ])
-        parameters = Parameter.unserialize(specification)
-        parameters.verify()
+        form = Form.unserialize(specification)
+        form.verify()
 
     def test_missing_schema_field(self, client):
         """Tests failure when schema field is missing"""
@@ -116,9 +116,9 @@ class TestParamsSpecification(BaseTestCase):
             '        field: test_field3',
             '        label: Test Field #3',
         ])
-        parameters = Parameter.unserialize(specification)
+        form = Form.unserialize(specification)
         with self.assertRaises(OperationError):
-            parameters.verify()
+            form.verify()
 
 class TestSpecification(BaseTestCase):
     def test_workflow_verify_rulelist_pass(self, client):
@@ -172,7 +172,7 @@ class TestSpecification(BaseTestCase):
         name = 'valid specification workflow'
         specification = '\n'.join([
             'name: %s' % name,
-            'parameters:',
+            'form:',
             '  schema:',
             '    fieldtype: structure',
             '    structure:',
