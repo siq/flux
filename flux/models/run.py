@@ -42,12 +42,11 @@ class Run(Model):
         return len(self.executions) + 1
 
     def abort_executions(self, session):
-        #self.status = 'aborted'
-        #self.ended = current_timestamp()
         # lock rows??
-        active_executions = session.query(WorkflowExecution).filter(
-            WorkflowExecution.run_id==self.id,
-            WorkflowExecution.status.in_(['active', 'pending', 'waiting']))
+        active_executions = session.query(WorkflowExecution).with_lockmode(
+            'update').filter(
+                WorkflowExecution.run_id==self.id,
+                WorkflowExecution.status.in_(['active', 'pending', 'waiting']))
 
         for execution in active_executions:
             execution.abort(session)
