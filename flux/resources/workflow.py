@@ -1,6 +1,21 @@
 from mesh.standard import *
 from scheme import *
 
+__all__ = ('Workflow',)
+
+FormStructure = {
+    'schema': Definition(nonempty=True),
+    'layout': Sequence(Structure({
+        'title': Text(),
+        'elements': Sequence(Structure({
+            'type': Token(nonempty=True),
+            'field': Token(nonempty=True),
+            'label': Text(),
+            'options': Field(),
+        })),
+    }), nonempty=True),
+}
+
 class Workflow(Resource):
     """A workflow."""
 
@@ -13,18 +28,7 @@ class Workflow(Resource):
         name = Text(nonempty=True, operators='equal icontains')
         designation = Token(operators='equal')
         specification = Text(nonempty=True)
-        form = Structure({
-            'schema': Definition(nonempty=True),
-            'layout': Sequence(Structure({
-                'title': Text(),
-                'elements': Sequence(Structure({
-                    'type': Token(nonempty=True),
-                    'field': Token(nonempty=True),
-                    'label': Text(),
-                    'options': Field(),
-                })),
-            }), nonempty=True),
-        }, deferred=True, readonly=True)
+        form = Structure(FormStructure, deferred=True, readonly=True)
         modified = DateTime(utc=True, readonly=True)
 
     class create(Resource.create):
@@ -36,6 +40,7 @@ class Workflow(Resource):
         schema = {
             'name': Text(nonempty=True),
             'description': Text(),
+            'form': Structure(FormStructure),
             'operations': Sequence(Structure({
                 'operation': Token(segments=2, nonempty=False),
                 'run_params': Field(),

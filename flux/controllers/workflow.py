@@ -28,8 +28,10 @@ class WorkflowController(ModelController):
     def generate(self, request, response, subject, data):
         name = data['name']
         description = data.get('description', '')
+        form = data.get('form')
         operations = data['operations']
-        specification = {'name': name, 'entry': 'step:0'}
+
+        specification = {'name': name, 'form': form, 'entry': 'step:0'}
         steps = {}
 
         step_name = None
