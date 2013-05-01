@@ -92,7 +92,9 @@ class TestWorkflow(BaseTestCase):
             'specification': unicode(self._workflow_spec),
         }
 
-        resp = client.execute('workflow', 'get', workflow_id)
+        resp = client.execute(
+                'workflow', 'get', workflow_id,
+                {'include': ['specification']})
         self.assertEquals(resp.status, 'OK')
         result = resp.content
 
@@ -122,7 +124,9 @@ class TestWorkflow(BaseTestCase):
             'specification': unicode(self._workflow_spec),
         }
 
-        resp = client.execute('workflow', 'get', workflow_id, data={'include': ['form']})
+        resp = client.execute(
+                'workflow', 'get', workflow_id,
+                {'include': ['specification', 'form']})
         self.assertEquals(resp.status, 'OK')
         result = resp.content
 
@@ -190,7 +194,9 @@ class TestWorkflow(BaseTestCase):
             'specification': unicode(self._workflow_spec),
         }
 
-        resp = client.execute('workflow', 'get', workflow_id, data={'include': ['form']})
+        resp = client.execute(
+                'workflow', 'get', workflow_id,
+                {'include': ['specification', 'form']})
         self.assertEquals(resp.status, 'OK')
         result = resp.content
 
@@ -207,7 +213,9 @@ class TestWorkflow(BaseTestCase):
         self.assertEquals(resp1.status, 'OK')
         workflow_id = resp1.content['id']
 
-        resp2 = client.execute('workflow', 'get', workflow_id)
+        resp2 = client.execute(
+                'workflow', 'get', workflow_id,
+                {'include': ['specification', 'form']})
         self.assertEquals(resp2.status, 'OK')
         original_vals = {k: resp2.content.pop(k) for k in ('name', 'modified',)}
 
@@ -216,7 +224,9 @@ class TestWorkflow(BaseTestCase):
         resp3 = client.execute('workflow', 'update', workflow_id, {'name': new_name})
         self.assertEquals(resp3.status, 'OK')
 
-        resp4 = client.execute('workflow', 'get', workflow_id)
+        resp4 = client.execute(
+                'workflow', 'get', workflow_id,
+                {'include': ['specification', 'form']})
         self.assertEquals(resp4.status, 'OK')
         result = resp4.content
         for k in ('name', 'modified'):
@@ -230,7 +240,9 @@ class TestWorkflow(BaseTestCase):
         self.assertEquals(resp1.status, 'OK')
         workflow_id = resp1.content['id']
 
-        resp2 = client.execute('workflow', 'get', workflow_id)
+        resp2 = client.execute(
+                'workflow', 'get', workflow_id,
+                {'include': ['specification', 'form']})
         self.assertEquals(resp2.status, 'OK')
         result = resp2.content
         self.assertEquals(result['id'], workflow_id)

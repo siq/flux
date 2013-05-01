@@ -27,11 +27,14 @@ class Workflow(Resource):
         id = UUID(nonnull=True, oncreate=True, operators='equal')
         name = Text(nonempty=True, operators='equal icontains')
         designation = Token(operators='equal')
-        specification = Text(nonempty=True)
+        specification = Text(deferred=True)
         form = Structure(FormStructure, deferred=True, readonly=True)
         modified = DateTime(utc=True, readonly=True)
 
     class create(Resource.create):
+        fields = {
+            'specification': Text(nonempty=True)
+        }
         support_returning = True
 
     class generate:
@@ -57,4 +60,7 @@ class Workflow(Resource):
         }
 
     class update(Resource.update):
+        fields = {
+            'specification': Text(nonnull=True)
+        }
         support_returning = True

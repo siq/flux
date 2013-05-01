@@ -85,3 +85,5 @@ class WorkflowController(ModelController):
                 resource['form'] = form.extract_dict()
             else:
                 resource['form'] = None
+        if 'specification' in include:
+            resource['specification'] = model.specification
