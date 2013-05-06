@@ -1,4 +1,6 @@
+from mesh.exceptions import OperationError
 from scheme import current_timestamp
+from scheme.exceptions import SchemeError
 from spire.schema import *
 from sqlalchemy.orm.collections import attribute_mapped_collection
 
@@ -49,15 +51,21 @@ class Workflow(Model):
 
     @classmethod
     def create(cls, session, **attrs):
-        cls._verify_specification(attrs.get('specification'))
         subject = cls(modified=current_timestamp(), **attrs)
         session.add(subject)
         return subject
 
     def update(self, session, **attrs):
-        self._verify_specification(attrs.get('specification'))
         self.update_with_mapping(attrs, ignore='id')
         self.modified = current_timestamp()
+
+    @validates('specification')
+    def validate_specification(self, name, value):
+        try:
+            self._verify_specification(value)
+        except (OperationError, SchemeError) as error:
+            raise OperationError(structure={name: error})
+        return value
 
     @classmethod
     def _verify_specification(cls, specification):

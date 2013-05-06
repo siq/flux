@@ -61,6 +61,6 @@ class Workflow(Resource):
 
     class update(Resource.update):
         fields = {
-            'specification': Text(nonnull=True)
+            'specification': Text(nonnull=True, min_length=1)
         }
         support_returning = True

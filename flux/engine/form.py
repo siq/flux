@@ -34,13 +34,5 @@ class Form(Element):
         for i, element in reverse_enumerate(elements[:], len(elements) - 1):
             if fields.pop(element['field'], False):
                 elements.pop(i)
-
-        errors = {}
-        for element in elements:
-            errors[element['field']] = OperationError(token='no-matching-schema-field')
-
-        for field in fields.iterkeys():
-            errors[field] = OperationError(token='no-matching-layout-element')
-
-        if errors:
-             raise OperationError(structure=errors)
+        if elements or fields:
+            raise OperationError(token='mismatch-form-layout-schema')
