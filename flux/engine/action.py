@@ -16,6 +16,10 @@ class Action(Element):
                 'step': Token(nonempty=True),
                 'parameters': Field(),
             },
+            'ignore-step-failure': {
+                'step': Token(nonempty=True),
+                'parameters': Field(),
+            },
         },
         nonempty=True,
         polymorphic_on='action')
@@ -36,3 +40,9 @@ class ExecuteStep(Action):
         values = {'step': {'out': environment.output}}
         step.initiate(session, environment.run, environment.ancestor,
             self.parameters, values)
+
+class IgnoreStepFailure(Action):
+    polymorphic_identity = 'ignore-step-failure'
+
+    def execute(self, session, environment):
+        environment.failure = False

@@ -6,8 +6,10 @@ from flux.engine.action import Action
 class Environment(object):
     """A rule evaluation environment."""
 
-    def __init__(self, workflow, run, interpolator, output=None, ancestor=None):
+    def __init__(self, workflow, run, interpolator, output=None, ancestor=None,
+                 failure=False):
         self.ancestor = ancestor
+        self.failure = failure
         self.interpolator = interpolator
         self.output = output
         self.run = run
