@@ -63,7 +63,7 @@ class Workflow(Model):
     def validate_specification(self, name, value):
         try:
             self._verify_specification(value)
-        except (OperationError, SchemeError) as error:
+        except SchemeError as error:
             raise OperationError(structure={name: error})
         return value
 
