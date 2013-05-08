@@ -31,7 +31,7 @@ class Run(Model):
     ended = DateTime(timezone=True)
 
     executions = relationship(WorkflowExecution, backref='run',
-        cascade='all,delete-orphan', passive_deletes=True,
+        cascade='all,delete-orphan', lazy='dynamic', passive_deletes=True,
         order_by=WorkflowExecution.execution_id)
 
     def __repr__(self):
@@ -39,13 +39,16 @@ class Run(Model):
 
     @property
     def next_execution_id(self):
-        return len(self.executions) + 1
+        return len(self.executions.all()) + 1
+
+    @property
+    def active_executions(self):
+        active_statuses = ACTIVE_RUN_STATUSES.split(' ')
+        return self.executions.filter(
+                WorkflowExecution.status.in_(active_statuses))
 
     def abort_executions(self, session):
-        # lock rows??
-        active_executions = session.query(WorkflowExecution).with_lockmode(
-            'update').filter(
-                WorkflowExecution.run_id==self.id,
+        active_executions = self.executions.with_lockmode('update').filter(
                 WorkflowExecution.status.in_(['active', 'pending', 'waiting']))
 
         for execution in active_executions:
@@ -77,9 +80,9 @@ class Run(Model):
         return run
 
     def create_execution(self, session, step, parameters=None, ancestor=None, name=None):
-        session.expire(self)
-        return WorkflowExecution.create(session, run_id=self.id, execution_id=self.next_execution_id,
-            ancestor=ancestor, step=step, name=name, parameters=parameters)
+        return WorkflowExecution.create(
+                session, run_id=self.id, execution_id=self.next_execution_id,
+                ancestor=ancestor, step=step, name=name, parameters=parameters)
 
     def fail(self, session):
         self._end_run(session, 'failed')

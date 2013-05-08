@@ -56,6 +56,7 @@ class Step(Element):
         from flux.models import Run
         run = Run.load(session, id=execution.run_id, lockmode='update')
 
+        failure = False
         values = None
         operation = session.query(Operation).get(self.operation)
 
@@ -69,34 +70,42 @@ class Step(Element):
             elif output['status'] == 'invalid':
                 execution.invalidate(session, output['errors'])
                 return run.invalidate(session)
+
         elif status == 'failed':
+            failure = True
             execution.fail(session)
         elif status == 'timedout':
+            failure = True
             execution.timeout(session)
-
-        # temporary hack
-        if execution.status == 'failed':
-            return run.fail(session)
-        elif execution.status == 'timedout':
-            return run.timeout(session)
 
         interpolator = self._construct_interpolator(run, execution)
         if values:
             interpolator['step']['out'] = values
 
-        environment = Environment(workflow, run, interpolator, values, execution)
+        environment = Environment(workflow, run, interpolator, output=values,
+                                  ancestor=execution, failure=failure)
 
         postoperation = self.postoperation
         if postoperation:
             postoperation.evaluate(session, environment)
-            return
 
-        active_executions = session.query(func.count(WorkflowExecution.id)).filter(
-            WorkflowExecution.run_id==run.id,
-            WorkflowExecution.status!='completed').scalar()
+        if environment.failure:
+            if execution.status == 'failed':
+                return run.fail(session)
+            if execution.status == 'timedout':
+                return run.timeout(session)
+            # TODO: perhaps handle case of postop failure
 
-        if not active_executions:
-            run.complete(session)
+        if not run.active_executions.count():
+            executions = run.executions
+            execution_status = WorkflowExecution.status
+
+            if executions.filter(execution_status=='failed').count():
+                return run.fail(session)
+            if executions.filter(execution_status=='timedout').count():
+                return run.timeout(session)
+            if not executions.filter(execution_status!='completed').count():
+                return run.complete(session)
 
     def verify(self, steps):
         for rulelist in ('preoperation', 'postoperation'):

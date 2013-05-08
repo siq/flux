@@ -65,8 +65,14 @@ class RunController(ModelController):
             session.commit()
 
     def _annotate_resource(self, request, model, resource, data):
-        if data and 'include' in data and 'executions' in data['include']:
-            attrs = ('id', 'execution_id', 'ancestor_id', 'step', 'name',
-                     'status', 'started', 'ended',)
-            executions = [e.extract_dict(attrs=attrs) for e in model.executions]
+        if not data:
+            return
+
+        include = data.get('include')
+        if include and 'executions' in include:
+            attrs = (
+                'id', 'execution_id', 'ancestor_id', 'step', 'name',
+                'status', 'started', 'ended',
+            )
+            executions = [e.extract_dict(attrs=attrs) for e in model.executions.all()]
             resource['executions'] = executions
