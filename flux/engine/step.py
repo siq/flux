@@ -11,6 +11,7 @@ class Step(Element):
 
     key_attr = 'name'
     schema = Structure({
+        'title': Text(),
         'description': Text(),
         'operation': Token(nonempty=True),
         'parameters': Map(Field(), nonnull=True),
@@ -36,7 +37,7 @@ class Step(Element):
             recursive_merge(params, parameters)
 
         execution = run.create_execution(session, self.name, ancestor=ancestor,
-                                         name=operation.name)
+                                         name=(self.title or operation.name))
         session.flush()
 
         interpolator = self._construct_interpolator(run, execution, values)
