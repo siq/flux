@@ -29,7 +29,7 @@ class Workflow(Element):
             self.steps[self.entry].initiate(session, run)
         except Exception:
             log('exception', 'initiation of %r failed due to exception', run)
-            run.complete(session, 'failed')
+            run.fail(session)
 
     def verify(self):
         steps = self.steps
