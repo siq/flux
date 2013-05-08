@@ -3,6 +3,7 @@ from mesh.standard import bind
 from spire.mesh import ModelController, MeshDependency
 from spire.schema import SchemaDependency
 
+from flux.bindings import platoon
 from flux.models import WorkflowExecution as WorkflowExecutionModel
 from flux.resources import Execution
 
@@ -21,12 +22,11 @@ class ExecutionController(ModelController):
         session = self.schema.session
 
         status = data.pop('status')
-        if status == 'aborted' and subject.status in ('active', 'pending', 'waiting'):
+        if status == 'aborted' and subject.is_active:
             subject.abort(session)
             session.commit()
 
-            Run = self.flux.bind('flux/1.0/run')
-            run = Run.get(subject.run_id)
-            run.update({'status': 'aborted'})
+            self.flux.execute('flux/1.0/run', 'update', subject.run_id,
+                              {'status': 'aborted'})
 
         response({'id': subject.id})

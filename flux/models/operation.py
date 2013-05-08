@@ -35,7 +35,7 @@ class Operation(Model):
     @classmethod
     def create(cls, session, outcomes, **attrs):
         operation = cls(**attrs)
-        
+
         for name, outcome in outcomes.iteritems():
             outcome = Outcome(name=name, **outcome)
             operation.outcomes[name] = outcome

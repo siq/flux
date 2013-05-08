@@ -2,12 +2,14 @@ from mesh.exceptions import GoneError
 from mesh.standard import bind
 from scheme import current_timestamp
 from spire.schema import *
+from spire.support.logs import LogHelper
 
 from flux.bindings import platoon
 from flux.constants import *
 
 __all__ = ('WorkflowExecution',)
 
+log = LogHelper('flux')
 schema = Schema('flux')
 
 Process = bind(platoon, 'platoon/1.0/process')
@@ -35,6 +37,14 @@ class WorkflowExecution(Model):
     descendants = relationship('WorkflowExecution',
         backref=backref('ancestor', remote_side=[id]))
 
+    def __repr__(self):
+        return 'WorkflowExecution(id=%r, execution_id=%r, status=%r)' % (
+                self.id, self.execution_id, self.status)
+
+    @property
+    def is_active(self):
+        return self.status in ACTIVE_RUN_STATUSES.split(' ')
+
     @property
     def workflow(self):
         return self.run.workflow
@@ -43,11 +53,9 @@ class WorkflowExecution(Model):
         self.status = 'aborted'
         self.ended = current_timestamp()
         try:
-            process = Process.get(self.id)
+            Process.execute('update', {'status': 'aborted'}, subject=self.id)
         except GoneError:
-            pass
-        else:
-            process.update({'status': 'aborted'})
+            log('warning', 'no corresponding process resource for %r', self)
 
     def complete(self, session, outcome):
         self.status = 'completed'

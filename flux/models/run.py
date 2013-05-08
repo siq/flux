@@ -38,20 +38,21 @@ class Run(Model):
         return 'Run(id=%r, name=%r, status=%r)' % (self.id, self.name, self.status)
 
     @property
-    def next_execution_id(self):
-        return len(self.executions.all()) + 1
-
-    @property
     def active_executions(self):
         active_statuses = ACTIVE_RUN_STATUSES.split(' ')
         return self.executions.filter(
                 WorkflowExecution.status.in_(active_statuses))
 
-    def abort_executions(self, session):
-        active_executions = self.executions.with_lockmode('update').filter(
-                WorkflowExecution.status.in_(['active', 'pending', 'waiting']))
+    @property
+    def is_active(self):
+        return self.status in ACTIVE_RUN_STATUSES.split(' ')
 
-        for execution in active_executions:
+    @property
+    def next_execution_id(self):
+        return len(self.executions.all()) + 1
+
+    def abort_executions(self, session):
+        for execution in self.active_executions.with_lockmode('update').all():
             execution.abort(session)
 
     def complete(self, session):
@@ -86,16 +87,22 @@ class Run(Model):
 
     def fail(self, session):
         self._end_run(session, 'failed')
+        self.abort_executions(session)
 
     def initiate(self, session):
         self.started = current_timestamp()
         self.workflow.workflow.initiate(session, self)
 
+    def initiate_abort(self, session):
+        self._end_run(session, 'aborted')
+
     def invalidate(self, session):
         self._end_run(session, 'invalidated')
+        self.abort_executions(session)
 
     def timeout(self, session):
         self._end_run(session, 'timedout')
+        self.abort_executions(session)
 
     def _end_run(self, session, status):
         self.status = status
