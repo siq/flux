@@ -44,6 +44,6 @@ class Workflow(Element):
             element = getattr(self, rulelist, None)
             if element:
                 element.verify(steps)
-                
+
         for step in steps.itervalues():
             step.verify(steps)

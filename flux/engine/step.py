@@ -25,6 +25,9 @@ class Step(Element):
     }, nonnull=True)
 
     def initiate(self, session, run, ancestor=None, parameters=None, values=None):
+        if not run.is_active:
+            return
+
         operation = session.query(Operation).get(self.operation)
         if not operation:
             raise UnknownOperationError(self.operation)
@@ -38,14 +41,26 @@ class Step(Element):
             recursive_merge(params, parameters)
 
         execution = run.create_execution(session, self.name, ancestor=ancestor,
-                name=operation.name)
+                                         name=operation.name)
         session.flush()
 
+        interpolator = self._construct_interpolator(run, execution, values)
         if params:
-            interpolator = self._construct_interpolator(run, execution, values)
             params = interpolator.interpolate(operation.schema, params)
         else:
             params = None
+
+        workflow = run.workflow.workflow
+        environment = Environment(workflow, run, interpolator, output=values,
+                                  ancestor=execution)
+        preoperation = self.preoperation
+        if preoperation:
+            try:
+                preoperation.evaluate(session, environment)
+            except Exception:
+                log('exception',
+                    'preoperation for %r encountered an exception', self)
+                self.run.fail(session)
 
         execution.start(params)
         session.commit()
@@ -87,14 +102,18 @@ class Step(Element):
 
         postoperation = self.postoperation
         if postoperation:
-            postoperation.evaluate(session, environment)
+            try:
+                postoperation.evaluate(session, environment)
+            except Exception:
+                log('exception',
+                    'postoperation for %r encountered an exception', self)
+                self.run.fail(session)
 
         if environment.failure:
             if execution.status == 'failed':
                 return run.fail(session)
             if execution.status == 'timedout':
                 return run.timeout(session)
-            # TODO: perhaps handle case of postop failure
 
         if not run.active_executions.count():
             executions = run.executions
