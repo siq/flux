@@ -1,15 +1,10 @@
 from scheme import *
 from scheme.util import recursive_merge
-from spire.schema import NoResultFound
-from spire.support.logs import LogHelper
-from sqlalchemy import func
 
 from flux.engine.interpolation import Interpolator
 from flux.engine.rule import Environment, RuleList
 from flux.exceptions import *
 from flux.models import Operation, WorkflowExecution
-
-log = LogHelper('flux')
 
 class Step(Element):
     """A workflow element."""
@@ -55,12 +50,7 @@ class Step(Element):
                                   ancestor=execution)
         preoperation = self.preoperation
         if preoperation:
-            try:
-                preoperation.evaluate(session, environment)
-            except Exception:
-                log('exception',
-                    'preoperation for %r encountered an exception', self)
-                self.run.fail(session)
+            preoperation.evaluate(session, environment)
 
         execution.start(params)
         session.commit()
@@ -102,12 +92,7 @@ class Step(Element):
 
         postoperation = self.postoperation
         if postoperation:
-            try:
-                postoperation.evaluate(session, environment)
-            except Exception:
-                log('exception',
-                    'postoperation for %r encountered an exception', self)
-                self.run.fail(session)
+            postoperation.evaluate(session, environment)
 
         if environment.failure:
             if execution.status == 'failed':
