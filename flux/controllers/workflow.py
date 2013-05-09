@@ -40,6 +40,7 @@ class WorkflowController(ModelController):
             new_step = {
                 'operation': op['operation'],
                 'parameters': op['run_params'],
+                'title': op.get('title'),
             }
             if step_name:
                 steps[step_name]['postoperation'] = [{

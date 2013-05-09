@@ -45,6 +45,7 @@ class Workflow(Resource):
             'description': Text(),
             'form': Structure(FormStructure),
             'operations': Sequence(Structure({
+                'title': Text(),
                 'operation': Token(segments=2, nonempty=False),
                 'run_params': Field(),
                 'step_params': Field(),
