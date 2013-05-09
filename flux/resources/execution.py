@@ -19,9 +19,9 @@ class Execution(Resource):
         ancestor_id = UUID(readonly=True, operators='equal')
         step = Token(segments=2, readonly=True, operators='equal')
         name = Text()
-        status = Enumeration(RUN_STATUSES, nonnull=True)
-        started = DateTime(readonly=True)
-        ended = DateTime(readonly=True)
+        status = Enumeration(RUN_STATUSES, nonnull=True, oncreate=False),
+        started = DateTime(utc=True, readonly=True)
+        ended = DateTime(utc=True, readonly=True)
         parameters = Field(readonly=True)
 
     class update(Resource.update):

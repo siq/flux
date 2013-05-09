@@ -12,7 +12,7 @@ class Run(Resource):
 
     class schema:
         id = UUID(nonnull=True, oncreate=True, operators='equal')
-        workflow_id = UUID(nonempty=True, operators='equal')
+        workflow_id = UUID(nonempty=True, onupdate=False, operators='equal')
         name = Text(operators='equal')
         status = Enumeration(RUN_STATUSES, oncreate=False)
         parameters = Field(onupdate=False)
