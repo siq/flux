@@ -33,7 +33,10 @@ class Run(Resource):
         support_returning = True
 
     class update(Resource.update):
-        status = Enumeration('aborted', nonempty=True)
+        support_returning = True
+        fields = {
+            'status': Enumeration('aborted', nonempty=True),
+        }
 
     class task:
         endpoint = ('TASK', 'run')

@@ -25,6 +25,6 @@ class Execution(Resource):
         parameters = Field(readonly=True)
 
     class update(Resource.update):
-        schema = {
-            'status': Enumeration('aborted'),
+        fields = {
+            'status': Enumeration('aborted', nonempty=True),
         }
