@@ -28,26 +28,28 @@ class WorkflowController(ModelController):
     def generate(self, request, response, subject, data):
         name = data['name']
         description = data.get('description', '')
-        form = data.get('form')
         operations = data['operations']
 
-        specification = {'name': name, 'form': form, 'entry': 'step:0'}
-        steps = {}
+        specification = {'name': name, 'entry': 'step:0'}
+        form = data.get('form')
+        if form:
+            specification['form'] = form
 
+        steps = {}
         step_name = None
         for i, op in enumerate(operations):
             new_step_name = 'step:%s' % i
             new_step = {
                 'operation': op['operation'],
                 'parameters': op['run_params'],
-                'title': op.get('title'),
+                'description': op.get('description'),
             }
             if step_name:
                 steps[step_name]['postoperation'] = [{
                     'actions': [{
                         'action': 'execute-step',
                         'step': new_step_name,
-                        'parameters': op['step_params'],
+                        'parameters': op.get('step_params'),
                     }],
                     'terminal': False,
                 }]

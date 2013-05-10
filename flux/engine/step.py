@@ -11,14 +11,14 @@ class Step(Element):
 
     key_attr = 'name'
     schema = Structure({
-        'title': Text(),
         'description': Text(),
         'operation': Token(nonempty=True),
         'parameters': Map(Field(), nonnull=True),
         'preoperation': RuleList.schema,
         'postoperation': RuleList.schema,
         'timeout': Integer(),
-    }, nonnull=True)
+    }, nonnull=True, key_order=['description', 'operation', 'parameters',
+                                'preoperation', 'postoperation', 'timeout'])
 
     def initiate(self, session, run, ancestor=None, parameters=None, values=None):
         if not run.is_active:
@@ -37,7 +37,7 @@ class Step(Element):
             recursive_merge(params, parameters)
 
         execution = run.create_execution(session, self.name, ancestor=ancestor,
-                                         name=(self.title or operation.name))
+                                         name=(self.description or operation.name))
         session.flush()
 
         interpolator = self._construct_interpolator(run, execution, values)

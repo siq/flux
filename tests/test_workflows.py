@@ -58,8 +58,7 @@ class BaseTestCase(MeshTestCase):
 
 
 class TestWorkflow(BaseTestCase):
-    workflow_data = {
-    }
+    """General Workflow test cases."""
     def _setup_workflow(self, client, name, specification=None):
         if specification is None:
             specification = '\n'.join([
@@ -283,3 +282,90 @@ class TestWorkflow(BaseTestCase):
         resp2 = client.execute('workflow', 'update', workflow_id,
                 {'name': 'test duplicate name workflow 3'})
         self.assertEquals(resp2.status, 'OK')
+
+
+class TestWorkflowGenerate(BaseTestCase):
+    """Tests cases of Workflow's generate method."""
+    def test_generate_request(self, client):
+        """Simple test of generate request"""
+        data = {
+            'name': 'test generate request',
+            'description': 'test description',
+            'operations': [
+                {
+                    'description': 'operation description',
+                    'operation': 'flux:test-operation',
+                    'run_params': {'foo': 'bar'},
+                }
+            ],
+        }
+        resp = client.execute('workflow', 'generate', data=data)
+        self.assertEquals('OK', resp.status)
+        result = resp.content
+
+        expected = {
+            'name': u'test generate request',
+            'description': u'test description',
+            'specification': u'\n'.join([
+                'name: test generate request',
+                'entry: step:0',
+                'steps:',
+                '  step:0:',
+                '    description: operation description',
+                '    operation: flux:test-operation',
+                '    parameters:',
+                '      foo: bar',
+            ])
+        }
+        self.assertEquals(expected, result)
+
+    def test_generate_multi_operations(self, client):
+        """Test generate request with multi-operations"""
+        data = {
+            'name': 'test generate multi ops',
+            'description': 'test description',
+            'operations': [
+                {
+                    'description': 'operation description',
+                    'operation': 'flux:test-operation',
+                    'run_params': {'foo': 'bar'},
+                },
+                {
+                    'description': 'operation description',
+                    'operation': 'flux:test-operation',
+                    'run_params': {'foo': 'bar'},
+                    'step_params': {'spam': 'eggs'},
+                }
+            ],
+        }
+        resp = client.execute('workflow', 'generate', data=data)
+        self.assertEquals('OK', resp.status)
+        result = resp.content
+
+        expected = {
+            'name': u'test generate multi ops',
+            'description': u'test description',
+            'specification': u'\n'.join([
+                'name: test generate multi ops',
+                'entry: step:0',
+                'steps:',
+                '  step:0:',
+                '    description: operation description',
+                '    operation: flux:test-operation',
+                '    parameters:',
+                '      foo: bar',
+                '    postoperation:',
+                '      - actions:',
+                '          - action: execute-step',
+                '            parameters:',
+                '              spam: eggs',
+                '            step: step:1',
+                '        terminal: false',
+                '  step:1:',
+                '    description: operation description',
+                '    operation: flux:test-operation',
+                '    parameters:',
+                '      foo: bar',
+            ])
+        }
+        self.assertEquals(expected, result)

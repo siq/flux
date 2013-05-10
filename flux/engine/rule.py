@@ -31,7 +31,7 @@ class Rule(Element):
         'condition': Condition.schema,
         'actions': Sequence(Action.schema, nonnull=True),
         'terminal': Boolean(nonnull=True, default=False),
-    })
+    }, key_order='description condition actions terminal')
 
     def evaluate(self, session, environment):
         condition = self.condition
