@@ -142,4 +142,3 @@ class Step(Element):
 
         status = ('completed' if outcome.outcome == 'success' else 'failed')
         return status, outcome.name, values
-

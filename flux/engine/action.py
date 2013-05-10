@@ -17,8 +17,6 @@ class Action(Element):
                 'parameters': Field(),
             },
             'ignore-step-failure': {
-                'step': Token(nonempty=True),
-                'parameters': Field(),
             },
         },
         nonempty=True,
