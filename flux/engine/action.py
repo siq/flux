@@ -29,6 +29,9 @@ class ExecuteStep(Action):
     polymorphic_identity = 'execute-step'
 
     def execute(self, session, environment):
+        if environment.failure:
+            return
+
         workflow = environment.workflow
         try:
             step = workflow.steps[self.step]

@@ -72,6 +72,7 @@ class Step(Element):
                 if status == 'completed':
                     execution.complete(session, outcome)
                 else:
+                    failure = True
                     execution.fail(session, outcome)
             elif output['status'] == 'invalid':
                 execution.invalidate(session, output['errors'])
