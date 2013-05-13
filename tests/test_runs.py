@@ -310,11 +310,12 @@ class TestRunOutcomeCases(BaseTestCase):
         run = Run.create(session, workflow_id, started=current_timestamp())
         session.commit()
         self._runs.append(run.id)
-        ancestor = None
+        execution = None
         for step in steps:
-            ancestor = run.create_execution(session, step,
-                    parameters=parameters, ancestor=ancestor)
-            ancestor.start()
+            execution = run.create_execution(session, step,
+                    parameters=parameters, ancestor=execution)
+            execution.start()
+            sleep(1)
         session.commit()
         return run
 
