@@ -40,3 +40,6 @@ class TestOperation(Operation):
             delta = input.get('duration', 5))
 
         return executing()
+
+    def report(self, session, data):
+        return {'status': 'executing', 'state': data.get('state')}
