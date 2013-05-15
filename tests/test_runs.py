@@ -923,77 +923,10 @@ class TestIgnoreStatusRuns(BaseTestCase):
             raise Exception('run not completing')
 
 class TestRunTimedoutCases(BaseTestCase):
+    """Test run cases involving the timedout status."""
     def test_timedout_case(self, client):
-        """Test timedout run case."""
+        """Test timedout with multi-step run."""
         name = u'test timedout run'
-        specification = '\n'.join([
-            'name: %s' % name,
-            'entry: step:0',
-            'steps:',
-            '  step:0:',
-            '    operation: flux:test-operation',
-            '    description : test timedout operation',
-            '    timeout: 1',
-            '    parameters:',
-            '      duration: 100',
-        ])
-        resp = self._setup_workflow(client, name, specification)
-        self.assertEquals('OK', resp.status)
-        workflow_id = resp.content['id']
-
-        resp = self._setup_run(client, workflow_id)
-        self.assertEquals('OK', resp.status)
-        run_id = resp.content['id']
-
-        wait = 10
-        limit = 10
-        for i in range(10):
-            sleep(wait)
-
-            resp = client.execute('run', 'get', run_id, {'include': ['executions']})
-            self.assertEquals('OK', resp.status)
-
-            run = resp.content
-
-            if run['status'] == 'pending':
-                continue
-
-            result = run
-            run_started = result.pop('started')
-            run_ended = result.pop('ended')
-            self.assertTrue(run_ended >= run_started)
-
-            for execution in result['executions']:
-                execution.pop('id')
-                execution.pop('ancestor_id')
-                exec_started = execution.pop('started')
-                exec_ended = execution.pop('ended')
-
-                self.assertTrue(exec_ended >= exec_started)
-                self.assertTrue(run_ended >= exec_ended)
-                self.assertTrue(exec_started >= run_started)
-
-            expected = {
-                'id': run_id,
-                'name': name,
-                'workflow_id': workflow_id,
-                'status': u'timedout',
-                'parameters': None,
-                'executions': [{
-                    'execution_id': 1,
-                    'step': u'step:0',
-                    'name': u'test timedout operation',
-                    'status': u'timedout',
-                }],
-            }
-            self.assertEquals(result, expected)
-            break
-        else:
-            raise Exception('run not completing')
-
-    def test_timedout_run_fail(self, client):
-        """Test timeout failing run."""
-        name = u'test timeout run fail'
         specification = '\n'.join([
             'name: %s' % name,
             'entry: step:0',
@@ -1161,3 +1094,168 @@ class TestRunTimedoutCases(BaseTestCase):
             break
         else:
             raise Exception('run not completing')
+
+class TestInvalidRunCase(BaseTestCase):
+    """Test run cases involving invalidated status."""
+    def test_invalidated_case(self, client):
+        """Test invalidated run with multi-step run."""
+        name = u'test invalidated run'
+        specification = '\n'.join([
+            'name: %s' % name,
+            'entry: step:0',
+            'steps:',
+            '  step:0:',
+            '    operation: flux:test-operation',
+            '    description : test invalid operation',
+            '    parameters:',
+            '      outcome: invalidated',
+            '    postoperation:',
+            '      - actions:',
+            '          - action: execute-step',
+            '            step: step:1',
+            '            parameters:',
+            '              outcome: completed',
+            '        terminal: false',
+            '  step:1:',
+            '    operation: flux:test-operation',
+            '    description : test completed operation',
+            '    parameters:',
+            '      outcome: completed',
+        ])
+        resp = self._setup_workflow(client, name, specification)
+        self.assertEquals('OK', resp.status)
+        workflow_id = resp.content['id']
+
+        resp = self._setup_run(client, workflow_id)
+        self.assertEquals('OK', resp.status)
+        run_id = resp.content['id']
+
+        wait = 10
+        limit = 10
+        for i in range(10):
+            sleep(wait)
+
+            resp = client.execute('run', 'get', run_id, {'include': ['executions']})
+            self.assertEquals('OK', resp.status)
+
+            run = resp.content
+
+            if run['status'] == 'pending':
+                continue
+
+            result = run
+            run_started = result.pop('started')
+            run_ended = result.pop('ended')
+            self.assertTrue(run_ended >= run_started)
+
+            for execution in result['executions']:
+                execution.pop('id')
+                execution.pop('ancestor_id')
+                exec_started = execution.pop('started')
+                exec_ended = execution.pop('ended')
+
+                self.assertTrue(exec_ended >= exec_started)
+                self.assertTrue(run_ended >= exec_ended)
+                self.assertTrue(exec_started >= run_started)
+
+            expected = {
+                'id': run_id,
+                'name': name,
+                'workflow_id': workflow_id,
+                'status': u'invalidated',
+                'parameters': None,
+                'executions': [
+                    {
+                        'execution_id': 1,
+                        'step': u'step:0',
+                        'name': u'test invalid operation',
+                        'status': u'invalidated',
+                    },
+                ],
+            }
+            self.assertEquals(result, expected)
+            break
+        else:
+            raise Exception('run not completing')
+
+    def test_ignore_invalidated_case(self, client):
+        name = u'test ignore invalidated run'
+        specification = '\n'.join([
+            'name: %s' % name,
+            'entry: step:0',
+            'steps:',
+            '  step:0:',
+            '    operation: flux:test-operation',
+            '    description : test invalid operation',
+            '    parameters:',
+            '      outcome: invalidated',
+            '    postoperation:',
+            '      - actions:',
+            '          - action: ignore-step-failure',
+            '          - action: execute-step',
+            '            step: step:1',
+            '            parameters:',
+            '              outcome: completed',
+            '        terminal: false',
+            '  step:1:',
+            '    operation: flux:test-operation',
+            '    description : test completed operation',
+            '    parameters:',
+            '      outcome: completed',
+        ])
+        resp = self._setup_workflow(client, name, specification)
+        self.assertEquals('OK', resp.status)
+        workflow_id = resp.content['id']
+
+        resp = self._setup_run(client, workflow_id)
+        self.assertEquals('OK', resp.status)
+        run_id = resp.content['id']
+
+        wait = 10
+        limit = 10
+        for i in range(10):
+            sleep(wait)
+
+            resp = client.execute('run', 'get', run_id, {'include': ['executions']})
+            self.assertEquals('OK', resp.status)
+
+            run = resp.content
+
+            if run['status'] == 'pending':
+                continue
+
+            result = run
+            run_started = result.pop('started')
+            run_ended = result.pop('ended')
+            self.assertTrue(run_ended >= run_started)
+
+            for execution in result['executions']:
+                execution.pop('id')
+                execution.pop('ancestor_id')
+                exec_started = execution.pop('started')
+                exec_ended = execution.pop('ended')
+
+                self.assertTrue(exec_ended >= exec_started)
+                self.assertTrue(run_ended >= exec_ended)
+                self.assertTrue(exec_started >= run_started)
+
+            expected = {
+                'id': run_id,
+                'name': name,
+                'workflow_id': workflow_id,
+                'status': u'invalidated',
+                'parameters': None,
+                'executions': [
+                    {
+                        'execution_id': 1,
+                        'step': u'step:0',
+                        'name': u'test invalid operation',
+                        'status': u'invalidated',
+                    },
+                ],
+            }
+            self.assertEquals(result, expected)
+            break
+        else:
+            raise Exception('run not completing')
+
