@@ -34,6 +34,9 @@ class TestOperation(Operation):
 
     def initiate(self, session, data):
         input = data.get('input') or {}
+        if input.get('outcome') == 'invalidated':
+            return invalidation({'error': 'failed'})
+
         ScheduledTask.queue_http_task('complete-test-operation',
             self.flux.prepare('flux/1.0/operation', 'task', None,
                 {'task': 'complete-test-operation', 'state': data}),
