@@ -1,5 +1,6 @@
 from mesh.standard import *
 from scheme import *
+from scheme.supplemental import Email
 
 from flux.constants import *
 
@@ -31,6 +32,9 @@ class Run(Resource):
 
     class create(Resource.create):
         support_returning = True
+        fields = {
+            'notify': Email(nonnull=True, min_length=1, multiple=True)
+        }
 
     class update(Resource.update):
         support_returning = True
