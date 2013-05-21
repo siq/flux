@@ -3,12 +3,14 @@ from scheme import current_timestamp
 from spire.mesh import MeshDependency, ModelController, support_returning
 from spire.schema import NoResultFound, SchemaDependency
 
-from flux.bindings import platoon
+from flux.bindings import platoon, truss
 from flux.engine.queue import QueueManager
 from flux.models import *
 from flux.resources import Run as RunResource
 
+Message = bind(truss, 'truss/1.0/message')
 ScheduledTask = bind(platoon, 'platoon/1.0/scheduledtask')
+SubscribedTask = bind(platoon, 'platoon/1.0/subscribedtask')
 
 class RunController(ModelController):
     resource = RunResource
@@ -30,6 +32,16 @@ class RunController(ModelController):
         ScheduledTask.queue_http_task('initiate-run',
             self.flux.prepare('flux/1.0/run', 'task', None,
             {'task': 'initiate-run', 'id': subject.id}))
+
+        notify = data.get('notify')
+        if notify:
+            SubscribedTask.queue_http_task(
+                'run-completion',
+                self.flux.prepare(
+                    'flux/1.0/run', 'task', None,
+                    {'task': 'run-completion', 'id': subject.id, 'notify': notify}
+                ),
+                topic='run:completed', aspects={'id': subject.id})
 
         return subject
 
@@ -61,10 +73,11 @@ class RunController(ModelController):
         if task == 'initiate-run':
             subject.initiate(session)
             session.commit()
-
         elif task == 'abort-executions':
             subject.abort_executions(session)
             session.commit()
+        elif task == 'run-completion':
+            self._send_completion_email(subject, data)
 
     def _annotate_resource(self, request, model, resource, data):
         if not data:
@@ -78,3 +91,9 @@ class RunController(ModelController):
             )
             executions = [e.extract_dict(attrs=attrs) for e in model.executions.all()]
             resource['executions'] = executions
+
+    def _send_completion_email(self, subject, data):
+        recipients = [{'to': data['notify'].split(',')}]
+        email_subject = 'Workflow run "%s" completed' % subject.name
+        body = 'The workflow run "%s" completed and is available for review.' % subject.name
+        Message.create(recipients=recipients, subject=email_subject, body=body)

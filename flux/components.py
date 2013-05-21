@@ -43,6 +43,7 @@ class Flux(Component):
     docket = MeshDependency('docket')
     flux = MeshDependency('flux')
     platoon = MeshDependency('platoon')
+    truss = MeshDependency('truss')
 
     @onstartup(service='flux')
     def startup_flux(self):

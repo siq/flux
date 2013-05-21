@@ -18,7 +18,7 @@ spire:
   registration_url: http://localhost:10000/nucleus/1.0/service
   services:
     - id: flux
-      dependencies: [platoon, docket]
+      dependencies: [platoon, docket, truss]
 include:
   - /etc/siq/local.yaml
 components:
@@ -35,6 +35,9 @@ configuration:
   mesh:platoon:
     bundle: platoon.API
     url: http://localhost:4321/
+  mesh:truss:
+    bundle: truss.API
+    url: http://localhost:9999/api
   schema:flux:
     admin_url: postgresql://postgres@localhost/postgres
     migrations: flux:migrations

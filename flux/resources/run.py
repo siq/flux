@@ -53,10 +53,12 @@ class Run(Resource):
                 'initiate-run': {
                     'id': UUID(nonempty=True),
                 },
+                'run-completion' : {
+                    'id': UUID(nonempty=True),
+                    'notify': Text(nonempty=True)
+                },
             },
-            nonempty=True,
-            polymorphic_on=Enumeration(['abort-executions', 'initiate-run'],
-                name='task', nonempty=True))
+            nonempty=True, polymorphic_on='task')
         responses = {
             OK: Response(),
             INVALID: Response(Errors),

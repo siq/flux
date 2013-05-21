@@ -57,6 +57,7 @@ class Run(Model):
 
     def complete(self, session):
         self._end_run(session, 'completed')
+        Event.create(topic='run:completed', aspects={'id': self.id})
 
     def contribute_values(self):
         run = {'id': self.id, 'name': self.name, 'started': self.started}
