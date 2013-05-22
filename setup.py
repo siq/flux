@@ -1,6 +1,7 @@
 from distutils.core import setup
 from bake.packaging import *
 
+#test
 setup(
     name='flux',
     version='0.0.1',
