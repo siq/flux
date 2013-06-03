@@ -37,7 +37,7 @@ class Step(Element):
             recursive_merge(params, parameters)
 
         execution = run.create_execution(session, self.name, ancestor=ancestor,
-                                         name=(self.description or operation.name))
+            name=(self.description or operation.name))
         session.flush()
 
         interpolator = self._construct_interpolator(run, execution, values)
@@ -48,15 +48,15 @@ class Step(Element):
 
         workflow = run.workflow.workflow
         environment = Environment(workflow, run, interpolator, output=values,
-                                  ancestor=execution)
+            ancestor=execution)
+
         preoperation = self.preoperation
         if preoperation:
             preoperation.evaluate(session, environment)
 
         execution.start(params)
-        session.commit()
-
-        operation.initiate(id=execution.id, tag=self.name, input=params, timeout=self.timeout)
+        session.call_after_commit(operation.initiate, id=execution.id, tag=self.name, input=params,
+            timeout=self.timeout)
 
     def process(self, session, execution, workflow, status, output):
         from flux.models import Run
@@ -64,8 +64,8 @@ class Step(Element):
 
         failure = False
         values = None
-        operation = session.query(Operation).get(self.operation)
 
+        operation = session.query(Operation).get(self.operation)
         if status == 'completed':
             if output['status'] == 'valid':
                 status, outcome, values = self._parse_outcome(operation, output)
@@ -77,7 +77,6 @@ class Step(Element):
             elif output['status'] == 'invalid':
                 execution.invalidate(session, output['errors'])
                 return run.invalidate(session)
-
         elif status == 'failed':
             failure = True
             execution.fail(session)
@@ -90,7 +89,7 @@ class Step(Element):
             interpolator['step']['out'] = values
 
         environment = Environment(workflow, run, interpolator, output=values,
-                                  ancestor=execution, failure=failure)
+            ancestor=execution, failure=failure)
 
         postoperation = self.postoperation
         if postoperation:
@@ -99,7 +98,7 @@ class Step(Element):
         if environment.failure:
             if execution.status == 'failed':
                 return run.fail(session)
-            if execution.status == 'timedout':
+            elif execution.status == 'timedout':
                 return run.timeout(session)
 
         if not run.active_executions.count():
