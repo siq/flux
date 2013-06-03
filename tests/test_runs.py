@@ -126,6 +126,7 @@ class TestSimpleRunCases(BaseTestCase):
                 'name': workflow_name,
                 'parameters': None,
                 'workflow_id': workflow_id,
+                'products': None,
                 'status': u'completed',
             }
             self.assertEquals(expected, result)
@@ -176,6 +177,7 @@ class TestSimpleRunCases(BaseTestCase):
                 'name': workflow_name,
                 'parameters': None,
                 'workflow_id': workflow_id,
+                'products': None,
                 'status': u'completed',
                 'executions': [{
                     'execution_id': 1,
@@ -254,6 +256,7 @@ class TestSimpleRunCases(BaseTestCase):
                 'name': workflow_name,
                 'parameters': None,
                 'workflow_id': workflow_id,
+                'products': None,
                 'status': u'completed',
                 'executions': [
                     {
@@ -368,6 +371,7 @@ class TestRunOutcomeCases(BaseTestCase):
             'name': workflow_name,
             'parameters': None,
             'workflow_id': workflow_id,
+            'products': None,
             'status': u'completed',
             'executions': [{
                 'id': execution['id'],
@@ -429,6 +433,7 @@ class TestRunOutcomeCases(BaseTestCase):
             'name': workflow_name,
             'parameters': None,
             'workflow_id': workflow_id,
+            'products': None,
             'status': u'failed',
             'executions': [{
                 'id': execution['id'],
@@ -490,6 +495,7 @@ class TestRunOutcomeCases(BaseTestCase):
             'name': workflow_name,
             'parameters': None,
             'workflow_id': workflow_id,
+            'products': None,
             'status': u'invalidated',
             'executions': [{
                 'id': execution['id'],
@@ -555,6 +561,7 @@ class TestRunOutcomeCases(BaseTestCase):
                 'name': workflow_name,
                 'parameters': None,
                 'workflow_id': workflow_id,
+                'products': None,
                 'status': u'aborted',
                 'executions': [
                     {
@@ -631,6 +638,7 @@ class TestRunOutcomeCases(BaseTestCase):
                 'name': workflow_name,
                 'parameters': None,
                 'workflow_id': workflow_id,
+                'products': None,
                 'status': u'aborted',
                 'executions': [
                     {
@@ -742,6 +750,7 @@ class TestIgnoreStatusRuns(BaseTestCase):
                 'workflow_id': workflow_id,
                 'status': u'failed',
                 'parameters': None,
+                'products': None,
                 'executions': [{
                     'execution_id': 1,
                     'step': u'step:0',
@@ -822,6 +831,7 @@ class TestIgnoreStatusRuns(BaseTestCase):
                 'workflow_id': workflow_id,
                 'status': u'failed',
                 'parameters': None,
+                'products': None,
                 'executions': [
                     {
                         'execution_id': 1,
@@ -910,6 +920,7 @@ class TestIgnoreStatusRuns(BaseTestCase):
                 'workflow_id': workflow_id,
                 'status': u'failed',
                 'parameters': None,
+                'products': None,
                 'executions': [{
                     'execution_id': 1,
                     'step': u'step:0',
@@ -992,6 +1003,7 @@ class TestRunTimedoutCases(BaseTestCase):
                 'workflow_id': workflow_id,
                 'status': u'timedout',
                 'parameters': None,
+                'products': None,
                 'executions': [
                     {
                         'execution_id': 1,
@@ -1075,6 +1087,7 @@ class TestRunTimedoutCases(BaseTestCase):
                 'workflow_id': workflow_id,
                 'status': u'timedout',
                 'parameters': None,
+                'products': None,
                 'executions': [
                     {
                         'execution_id': 1,
@@ -1164,6 +1177,7 @@ class TestInvalidRunCase(BaseTestCase):
                 'workflow_id': workflow_id,
                 'status': u'invalidated',
                 'parameters': None,
+                'products': None,
                 'executions': [
                     {
                         'execution_id': 1,
@@ -1245,6 +1259,7 @@ class TestInvalidRunCase(BaseTestCase):
                 'workflow_id': workflow_id,
                 'status': u'invalidated',
                 'parameters': None,
+                'products': None,
                 'executions': [
                     {
                         'execution_id': 1,
