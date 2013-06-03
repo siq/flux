@@ -27,6 +27,7 @@ class Run(Model):
     name = Text(nullable=False)
     status = Enumeration(RUN_STATUSES, nullable=False, default='pending')
     parameters = Json()
+    products = Json()
     started = DateTime(timezone=True)
     ended = DateTime(timezone=True)
 
@@ -104,6 +105,17 @@ class Run(Model):
     def timeout(self, session):
         self._end_run(session, 'timedout')
         self.abort_executions(session)
+
+    def update_products(self, products):
+        if not isinstance(products, dict):
+            raise ValueError(products)
+        elif not products:
+            return
+
+        if self.products:
+            self.products.update(products)
+        else:
+            self.products = products
 
     def _end_run(self, session, status):
         self.status = status

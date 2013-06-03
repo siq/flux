@@ -17,7 +17,7 @@ class RunController(ModelController):
     version = (1, 0)
 
     model = Run
-    mapping = 'id workflow_id name status parameters started ended'
+    mapping = 'id workflow_id name status parameters products started ended'
     schema = SchemaDependency('flux')
 
     flux = MeshDependency('flux')

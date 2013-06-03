@@ -17,6 +17,9 @@ configuration:
   mesh:flux:
     bundle: flux.API
     url: http://localhost:9995/
+  mesh:truss:
+    bundle: truss.API
+    url: http://localhost:9997/
   mesh:platoon:
     bundle: platoon.API
     url: http://localhost:4321/

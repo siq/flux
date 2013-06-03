@@ -17,6 +17,7 @@ class Run(Resource):
         name = Text(operators='equal')
         status = Enumeration(RUN_STATUSES, oncreate=False)
         parameters = Field(onupdate=False)
+        products = Map(Field(nonempty=True), readonly=True)
         started = DateTime(utc=True, readonly=True)
         ended = DateTime(utc=True, readonly=True)
         executions = Sequence(Structure({
