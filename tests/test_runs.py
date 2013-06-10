@@ -1193,6 +1193,7 @@ class TestInvalidRunCase(BaseTestCase):
             raise Exception('run not completing')
 
     def test_ignore_invalidated_case(self, client):
+        """Test ignore of invalidated run."""
         name = u'test ignore invalidated run'
         specification = '\n'.join([
             'name: %s' % name,
