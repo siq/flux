@@ -15,7 +15,7 @@ class Run(Resource):
         id = UUID(nonnull=True, oncreate=True, operators='equal')
         workflow_id = UUID(nonempty=True, onupdate=False, operators='equal')
         name = Text(operators='equal')
-        status = Enumeration(RUN_STATUSES, oncreate=False)
+        status = Enumeration(RUN_STATUSES)
         parameters = Field(onupdate=False)
         products = Map(Field(nonempty=True), readonly=True)
         started = DateTime(utc=True, readonly=True)
@@ -34,13 +34,15 @@ class Run(Resource):
     class create(Resource.create):
         support_returning = True
         fields = {
-            'notify': Email(nonnull=True, min_length=1, multiple=True)
+            'notify': Email(nonnull=True, min_length=1, multiple=True),
+            'status': Enumeration('prepared pending', nonnull=True),
         }
 
     class update(Resource.update):
         support_returning = True
         fields = {
-            'status': Enumeration('aborted', nonempty=True),
+            'status': Enumeration('aborted pending', ignored_values='active completed'
+                ' failed invalidated prepared suspended timedout waiting'),
         }
 
     class task:

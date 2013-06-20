@@ -27,11 +27,7 @@ class RunController(ModelController):
     def create(self, request, response, subject, data):
         session = self.schema.session
         subject = self.model.create(session, **data)
-
         session.commit()
-        ScheduledTask.queue_http_task('initiate-run',
-            self.flux.prepare('flux/1.0/run', 'task', None,
-            {'task': 'initiate-run', 'id': subject.id}))
 
         notify = data.get('notify')
         if notify:
@@ -43,22 +39,35 @@ class RunController(ModelController):
                 ),
                 topic='run:completed', aspects={'id': subject.id})
 
+        if subject.status == 'pending':
+            ScheduledTask.queue_http_task('initiate-run',
+                self.flux.prepare('flux/1.0/run', 'task', None,
+                {'task': 'initiate-run', 'id': subject.id}))
+
         return subject
 
     @support_returning
     def update(self, request, response, subject, data):
-        session = self.schema.session
+        if not data:
+            return subject
 
-        status = data.pop('status')
+        session = self.schema.session
+        if 'name' in data:
+            subject.name = data['name']
+
+        status = data['status']
         if status == 'aborted' and subject.is_active:
             subject.initiate_abort(session)
-            session.commit()
-            ScheduledTask.queue_http_task(
-                'abort-run',
-                self.flux.prepare(
-                    'flux/1.0/run', 'task', None,
+            session.call_after_commit(ScheduledTask.queue_http_task, 'abort-run',
+                self.flux.prepare('flux/1.0/run', 'task', None,
                     {'task': 'abort-executions', 'id': subject.id}))
+        elif status == 'pending' and subject.status == 'prepared':
+            subject.status = 'pending'
+            session.call_after_commit(ScheduledTask.queue_http_task, 'initiate-run',
+                self.flux.prepare('flux/1.0/run', 'task', None,
+                    {'task': 'initiate-run', 'id': subject.id}))
 
+        session.commit()
         return subject
 
     def task(self, request, response, subject, data):
