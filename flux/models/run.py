@@ -119,7 +119,16 @@ class Run(Model):
 
     def initiate(self, session):
         self.started = current_timestamp()
-        self.workflow.workflow.initiate(session, self)
+        session.begin_nested()
+
+        try:
+            self.workflow.workflow.initiate(session, self)
+        except Exception:
+            log('exception', 'initiation of %r failed due to exception', self)
+            session.rollback()
+            self.invalidate(session)
+        else:
+            session.commit()
 
     def initiate_abort(self, session):
         self._end_run(session, 'aborted')

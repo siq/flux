@@ -85,8 +85,8 @@ class WorkflowExecution(Model):
         step = workflow.steps[self.step]
 
         self.ended = current_timestamp()
-
         session.begin_nested()
+
         try:
             step.process(session, self, workflow, status, output)
         except Exception:
