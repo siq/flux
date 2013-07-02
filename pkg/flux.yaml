@@ -32,6 +32,9 @@ configuration:
   mesh:docket:
     bundle: docket.API
     url: http://localhost:9998/
+  mesh:docket.entity:
+    introspect: true
+    url: http://localhost:9998/
   mesh:platoon:
     bundle: platoon.API
     url: http://localhost:4321/
