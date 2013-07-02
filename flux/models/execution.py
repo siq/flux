@@ -85,11 +85,16 @@ class WorkflowExecution(Model):
         step = workflow.steps[self.step]
 
         self.ended = current_timestamp()
+
+        session.begin_nested()
         try:
             step.process(session, self, workflow, status, output)
         except Exception:
+            session.rollback()
             log('exception', 'processing of %r failed due to exception', self)
             self.run.fail(session)
+        else:
+            session.commit()
 
     def start(self, parameters=None):
         self.started = current_timestamp()

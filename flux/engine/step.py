@@ -136,7 +136,7 @@ class Step(Element):
 
         values = output.get('values')
         if values:
-            pass # todo: validate using schema here
+            values = outcome.schema.unserialize(values)
         else:
             values = {}
 

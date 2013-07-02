@@ -5,8 +5,7 @@ from spire.mesh import MeshDependency
 from flux.bindings import docket, platoon
 from flux.support.operation import *
 
-__all__ = ('Operation', 'Process', 'ScheduledTask', 'SubscribedTask', 'executing',
-    'invalidation', 'outcome')
+__all__ = ('Operation', 'ScheduledTask', 'SubscribedTask')
 
 Process = bind(platoon, 'platoon/1.0/process')
 ScheduledTask = bind(platoon, 'platoon/1.0/scheduledtask')
@@ -16,14 +15,15 @@ class Operation(Unit, OperationMixin):
     """A workflow operation."""
 
     docket = MeshDependency('docket')
+    docket_entity = MeshDependency('docket.entity')
     flux = MeshDependency('flux')
     platoon = MeshDependency('platoon')
 
     process = Process
 
-    def register(self):
-        from flux.bundles import API
-        Operation = bind(API, 'flux/1.0/operation')
+    id = None
+    endpoint = None
 
-        Operation(**self.operation).put()
+    def register(self):
+        bind('flux.API', 'flux/1.0/operation')(**self.operation).put()
         return self.id, self.flux.prepare(*self.endpoint, preparation={'type': 'http'})

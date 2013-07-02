@@ -23,8 +23,7 @@ class Form(Element):
     }, nonnull=True)
 
     def extract_dict(self):
-        schema = self.__class__.schema
-        return self.extract(schema, self)
+        return self.extract(self.schema, self)
 
     def verify(self):
         layout = self.layout

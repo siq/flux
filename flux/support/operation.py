@@ -1,35 +1,20 @@
-def executing(state=None):
-    """Constructs a response for a platoon process executor indicating
-    an operation is executing."""
-
-    response = {'status': 'executing'}
-    if state:
-        response['state'] = state
-    return response
-
-def invalidation(*errors):
-    """Constructs a response for a platoon process executor representing
-    an invalid operation outcome."""
-
-    output = {'status': 'invalid', 'errors': errors}
-    return {'status': 'completed', 'output': output}
-
-def outcome(outcome, values=None):
-    """Constructs a response for a platoon process executor representing
-    a valid operation outcome."""
-
-    output = {'status': 'valid', 'outcome': outcome}
-    if values:
-        output['values'] = values
-    return {'status': 'completed', 'output': output}
-
 class OperationMixin(object):
     """A mixin to support a flux operation implementation."""
 
+    operation = None
     process = None
 
     def abort(self, session, data):
         pass
+
+    def executing(self, state=None):
+        """Constructs a response for a platoon process executor indicating
+        an operation is executing."""
+
+        response = {'status': 'executing'}
+        if state:
+            response['state'] = state
+        return response
 
     def execute(self, session, response, data):
         status = data['status']
@@ -44,6 +29,24 @@ class OperationMixin(object):
 
     def initiate(self, session, data):
         pass
+
+    def invalidation(self, **errors):
+        """Constructs a response for a platoon process executor representing
+        an invalid operation outcome."""
+
+        return {'status': 'completed', 'output': {
+            'status': 'invalid', 'errors': errors}}
+
+    def outcome(self, outcome, values=None):
+        """Constructs a response for a platoon process executor representing
+        a valid operation outcome."""
+
+        definition = self.operation['outcomes'][outcome]
+
+        output = {'status': 'valid', 'outcome': outcome}
+        if values:
+            output['values'] = definition['schema'].serialize(values)
+        return {'status': 'completed', 'output': output}
 
     def push(self, id, payload):
         self.process(id=id).update(payload)

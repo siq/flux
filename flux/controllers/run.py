@@ -17,7 +17,7 @@ class RunController(ModelController):
     version = (1, 0)
 
     model = Run
-    mapping = 'id workflow_id name status parameters products started ended'
+    mapping = 'id workflow_id name status parameters started ended'
     schema = SchemaDependency('flux')
 
     flux = MeshDependency('flux')
@@ -88,7 +88,11 @@ class RunController(ModelController):
         elif task == 'run-completion':
             self._send_completion_email(subject, data)
 
+    def _annotate_query(self, request, query, data):
+        return query.options(joinedload(Run.products))
+
     def _annotate_resource(self, request, model, resource, data):
+        resource['products'] = model.get_products()
         if not data:
             return
 

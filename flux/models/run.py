@@ -1,19 +1,34 @@
 from mesh.standard import OperationError, bind
 from scheme import current_timestamp
+from spire.mesh import Surrogate
 from spire.schema import *
 from spire.support.logs import LogHelper
+from sqlalchemy.orm.collections import attribute_mapped_collection
 
 from flux.bindings import platoon
 from flux.constants import *
 from flux.models.execution import WorkflowExecution
 from flux.models.workflow import Workflow
 
-__all__ = ('Run',)
+__all__ = ('Product', 'Run')
 
 Event = bind(platoon, 'platoon/1.0/event')
 
 schema = Schema('flux')
 log = LogHelper('flux')
+
+class Product(Model):
+    """A workflow product."""
+
+    class meta:
+        constraints = [UniqueConstraint('run_id', 'token')]
+        schema = schema
+        tablename = 'product'
+
+    id = Identifier()
+    run_id = ForeignKey('run.id', nullable=False, ondelete='CASCADE')
+    token = Token(nullable=False)
+    product = Surrogate(nullable=False)
 
 class Run(Model):
     """A workflow run."""
@@ -27,13 +42,15 @@ class Run(Model):
     name = Text(nullable=False)
     status = Enumeration(RUN_STATUSES, nullable=False, default='pending')
     parameters = Json()
-    products = Json()
     started = DateTime(timezone=True)
     ended = DateTime(timezone=True)
 
     executions = relationship(WorkflowExecution, backref='run',
         cascade='all,delete-orphan', lazy='dynamic', passive_deletes=True,
         order_by=WorkflowExecution.execution_id)
+    products = relationship(Product, backref='run',
+        collection_class=attribute_mapped_collection('token'),
+        cascade='all,delete-orphan', passive_deletes=True)
 
     def __repr__(self):
         return 'Run(id=%r, name=%r, status=%r)' % (self.id, self.name, self.status)
@@ -55,6 +72,9 @@ class Run(Model):
     def abort_executions(self, session):
         for execution in self.active_executions.with_lockmode('update').all():
             execution.abort(session)
+
+    def associate_product(self, token, product):
+        self.products[token] = Product(product=product, token=token)
 
     def complete(self, session):
         self._end_run(session, 'completed')
@@ -91,6 +111,12 @@ class Run(Model):
         self._end_run(session, 'failed')
         self.abort_executions(session)
 
+    def get_products(self):
+        products = {}
+        for token, product in self.products.iteritems():
+            products[token] = product.product
+        return products
+
     def initiate(self, session):
         self.started = current_timestamp()
         self.workflow.workflow.initiate(session, self)
@@ -105,17 +131,6 @@ class Run(Model):
     def timeout(self, session):
         self._end_run(session, 'timedout')
         self.abort_executions(session)
-
-    def update_products(self, products):
-        if not isinstance(products, dict):
-            raise ValueError(products)
-        elif not products:
-            return
-
-        if self.products:
-            self.products.update(products)
-        else:
-            self.products = products
 
     def _end_run(self, session, status):
         self.status = status

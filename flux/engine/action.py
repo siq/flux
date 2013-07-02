@@ -3,8 +3,6 @@ from scheme import *
 from flux.engine.interpolation import Interpolator
 from flux.models import Operation
 
-Products = Map(key=Token(nonempty=True), value=Text(nonempty=True), nonempty=True)
-
 class Action(Element):
     """A workflow action."""
 
@@ -21,7 +19,7 @@ class Action(Element):
             'ignore-step-failure': {
             },
             'promote-products': {
-                'products': Products,
+                'products': Map(Text(nonempty=True), Token(nonempty=True), nonempty=True),
             },
         },
         nonempty=True,
@@ -55,7 +53,9 @@ class IgnoreStepFailure(Action):
 
 class PromoteProducts(Action):
     polymorphic_identity = 'promote-products'
+    interpolation_schema = Map(Surrogate(nonempty=True), Token(nonempty=True))
 
     def execute(self, session, environment):
-        products = environment.interpolater.interpolate(Products, self.products)
-        environment.run.update_products(products)
+        products = environment.interpolator.interpolate(self.interpolation_schema, self.products)
+        for token, product in products.iteritems():
+            environment.run.associate_product(token, product)
