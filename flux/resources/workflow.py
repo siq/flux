@@ -13,7 +13,7 @@ FormStructure = {
             'label': Text(),
             'options': Field(),
         })),
-    }), nonempty=True),
+    })),
 }
 
 class Workflow(Resource):
