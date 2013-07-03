@@ -27,6 +27,9 @@ class Form(Element):
 
     def verify(self):
         layout = self.layout
+        if not layout:
+            return
+
         fields = self.schema.clone().structure
         elements = reduce(lambda x, y: x + y, [l['elements']  for l in layout])
 

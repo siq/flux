@@ -1,4 +1,4 @@
-import json
+from unittest import TestCase
 
 from scheme.fields import Structure, Text
 from mesh.exceptions import OperationError
@@ -11,29 +11,27 @@ from flux.bundles import API
 from flux.engine.form import Form, reverse_enumerate
 from flux.engine.rule import RuleList
 from flux.models import Run, Workflow
-from nose import SkipTest
-from unittest import TestCase
 
 
 adhoc_configure({
     'schema:flux': {
-        'url': 'postgresql://postgres@localhost/flux',
+        'url': 'postgresql://postgres@localhost/flux'
+    },
+    'mesh:flux': {
+        'url': 'http://localhost:9995/',
+        'bundle': 'flux.API',
     },
     'mesh:docket': {
         'url': 'http://localhost:9996/',
-        'specification': 'enamel.bindings.docket.specification',
-    },
-    'mesh:docket.entity': {
-        'url': 'http://localhost:9996/',
-        'introspect': True,
+        'specification': 'flux.bindings.docket.specification',
     },
     'mesh:platoon': {
         'url': 'http://localhost:9998/',
-        'specification': 'enamel.bindings.platoon.specification',
+        'specification': 'flux.bindings.platoon.specification',
     },
-    'mesh:flux': {
-        'url': 'http://localhost:9999/',
-        'bundle': 'flux.API',
+    'mesh:truss': {
+        'url': 'http://localhost:9997/',
+        'specification': 'flux.bindings.truss.specification',
     },
 })
 
@@ -62,9 +60,10 @@ class BaseTestCase(MeshTestCase):
             for instance in instances:
                 try:
                     session.delete(session.query(model).with_lockmode('update').get(instance))
+                    session.commit()
                 except:
+                    session.rollback()
                     continue
-        session.commit()
 
 
 class TestParamsSpecification(BaseTestCase):
@@ -89,8 +88,49 @@ class TestParamsSpecification(BaseTestCase):
         form = Form.unserialize(specification)
         form.verify()
 
+    def test_empty_layout(self, client):
+        """Tests validity of an empty layout"""
+        specification = '\n'.join([
+            'schema:',
+            '  fieldtype: structure',
+            '  structure:',
+            '    test_field1:',
+            '      fieldtype: text',
+            '      required: true',
+            '    test_field2:',
+            '      fieldtype: integer',
+            '      required: true',
+        ])
+        form = Form.unserialize(specification)
+        form.verify()
+
+    def test_missing_layout_field(self, client):
+        """Tests failure when provided layout is missing a field from schema"""
+        specification = '\n'.join([
+            'schema:',
+            '  fieldtype: structure',
+            '  structure:',
+            '    test_field1:',
+            '      fieldtype: text',
+            '      required: true',
+            '    test_field2:',
+            '      fieldtype: integer',
+            '      required: true',
+            'layout:',
+            '  - title: Test Section 1',
+            '    elements:',
+            '      - type: textbox',
+            '        field: test_field1',
+            '        label: Test Field #1',
+            '        options:',
+            '          multiline: true',
+        ])
+        form = Form.unserialize(specification)
+        with self.assertRaises(OperationError):
+            form.verify()
+
     def test_missing_schema_field(self, client):
-        """Tests failure when schema field is missing"""
+        """Tests failure when provided schema is missing a field from layout"""
         specification = '\n'.join([
             'schema:',
             '  fieldtype: structure',

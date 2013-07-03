@@ -1,7 +1,4 @@
-import json
-
 from datetime import datetime
-from nose import SkipTest
 from time import sleep
 
 from spire.core import adhoc_configure, Unit
@@ -22,9 +19,17 @@ adhoc_configure({
         'url': 'http://localhost:9995/',
         'bundle': 'flux.API',
     },
+    'mesh:docket': {
+        'url': 'http://localhost:9996/',
+        'specification': 'flux.bindings.docket.specification',
+    },
     'mesh:platoon': {
         'url': 'http://localhost:9998/',
         'specification': 'flux.bindings.platoon.specification',
+    },
+    'mesh:truss': {
+        'url': 'http://localhost:9997/',
+        'specification': 'flux.bindings.truss.specification',
     },
 })
 
@@ -44,17 +49,18 @@ class BaseTestCase(MeshTestCase):
 
     def tearDown(self):
         session = self.config.schema.session
-        stuff = (
-            (self._runs, Run),
-            (self._workflows, Workflow),
+        model_instances = (
+            (Run, self._runs),
+            (Workflow, self._workflows),
         )
-        for model_ids, model in stuff:
-            for model_id in model_ids:
+        for model, instances in model_instances:
+            for instance in instances:
                 try:
-                    session.delete(session.query(model).get(model_id))
+                    session.delete(session.query(model).with_lockmode('update').get(instance))
+                    session.commit()
                 except:
+                    session.rollback()
                     continue
-        session.commit()
 
 
 class TestWorkflow(BaseTestCase):

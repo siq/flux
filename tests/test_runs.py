@@ -21,9 +21,17 @@ adhoc_configure({
         'url': 'http://localhost:9995/',
         'bundle': 'flux.API',
     },
+    'mesh:docket': {
+        'url': 'http://localhost:9996/',
+        'specification': 'flux.bindings.docket.specification',
+    },
     'mesh:platoon': {
         'url': 'http://localhost:9998/',
         'specification': 'flux.bindings.platoon.specification',
+    },
+    'mesh:truss': {
+        'url': 'http://localhost:9997/',
+        'specification': 'flux.bindings.truss.specification',
     },
 })
 
@@ -44,18 +52,19 @@ class BaseTestCase(MeshTestCase):
 
     def tearDown(self):
         session = self.config.schema.session
-        stuff = (
-            (self._runs, Run),
-            (self._workflows, Workflow),
-            (self._operations, Operation),
+        model_instances = (
+            (Run, self._runs),
+            (Workflow, self._workflows),
+            (Operation, self._operations),
         )
-        for model_ids, model in stuff:
-            for model_id in model_ids:
+        for model, instances in model_instances:
+            for instance in instances:
                 try:
-                    session.delete(session.query(model).get(model_id))
+                    session.delete(session.query(model).with_lockmode('update').get(instance))
+                    session.commit()
                 except:
+                    session.rollback()
                     continue
-        session.commit()
 
     def _setup_workflow(self, client, name, specification=None):
         if specification is None:
@@ -97,7 +106,6 @@ class BaseTestCase(MeshTestCase):
 class TestSimpleRunCases(BaseTestCase):
     def test_run_workflow1(self, client):
         """Tests simple workflow run cycle"""
-        raise SkipTest
         workflow_name = 'test run workflow 1'
         resp1 = self._setup_workflow(client, workflow_name)
         self.assertEqual('OK', resp1.status)
@@ -126,17 +134,16 @@ class TestSimpleRunCases(BaseTestCase):
                 'name': workflow_name,
                 'parameters': None,
                 'workflow_id': workflow_id,
-                'products': None,
+                'products': {},
                 'status': u'completed',
             }
             self.assertEquals(expected, result)
-            return
-
-        raise Exception('run not completing')
+            break
+        else:
+            raise Exception('run not completing')
 
     def test_run_workflow2(self, client):
         """Tests simple workflow run and execution cycle"""
-        raise SkipTest
         workflow_name = u'test run workflow 2'
         resp1 = self._setup_workflow(client, workflow_name)
         self.assertEqual('OK', resp1.status)
@@ -177,7 +184,7 @@ class TestSimpleRunCases(BaseTestCase):
                 'name': workflow_name,
                 'parameters': None,
                 'workflow_id': workflow_id,
-                'products': None,
+                'products': {},
                 'status': u'completed',
                 'executions': [{
                     'execution_id': 1,
@@ -188,9 +195,9 @@ class TestSimpleRunCases(BaseTestCase):
                 }]
             }
             self.assertEquals(expected, result)
-            return
-
-        raise Exception('run not completing')
+            break
+        else:
+            raise Exception('run not completing')
 
     def test_multi_step_run(self, client):
         """Tests for multistep workflow runs"""
@@ -256,7 +263,7 @@ class TestSimpleRunCases(BaseTestCase):
                 'name': workflow_name,
                 'parameters': None,
                 'workflow_id': workflow_id,
-                'products': None,
+                'products': {},
                 'status': u'completed',
                 'executions': [
                     {
@@ -371,7 +378,7 @@ class TestRunOutcomeCases(BaseTestCase):
             'name': workflow_name,
             'parameters': None,
             'workflow_id': workflow_id,
-            'products': None,
+            'products': {},
             'status': u'completed',
             'executions': [{
                 'id': execution['id'],
@@ -433,7 +440,7 @@ class TestRunOutcomeCases(BaseTestCase):
             'name': workflow_name,
             'parameters': None,
             'workflow_id': workflow_id,
-            'products': None,
+            'products': {},
             'status': u'failed',
             'executions': [{
                 'id': execution['id'],
@@ -495,7 +502,7 @@ class TestRunOutcomeCases(BaseTestCase):
             'name': workflow_name,
             'parameters': None,
             'workflow_id': workflow_id,
-            'products': None,
+            'products': {},
             'status': u'invalidated',
             'executions': [{
                 'id': execution['id'],
@@ -561,7 +568,7 @@ class TestRunOutcomeCases(BaseTestCase):
                 'name': workflow_name,
                 'parameters': None,
                 'workflow_id': workflow_id,
-                'products': None,
+                'products': {},
                 'status': u'aborted',
                 'executions': [
                     {
@@ -581,9 +588,9 @@ class TestRunOutcomeCases(BaseTestCase):
                 ],
             }
             self.assertEquals(expected, result)
-            return
-
-        raise Exception('run not completing')
+            break
+        else:
+            raise Exception('run not completing')
 
     def test_abort_execution(self, client):
         '''Test setting execution status to aborted'''
@@ -638,7 +645,7 @@ class TestRunOutcomeCases(BaseTestCase):
                 'name': workflow_name,
                 'parameters': None,
                 'workflow_id': workflow_id,
-                'products': None,
+                'products': {},
                 'status': u'aborted',
                 'executions': [
                     {
@@ -658,9 +665,9 @@ class TestRunOutcomeCases(BaseTestCase):
                 ],
             }
             self.assertEquals(expected, result)
-            return
-
-        raise Exception('run not completing')
+            break
+        else:
+            raise Exception('run not completing')
 
     def test_success_outcome_with_concurrent_executions(self, client):
         '''Test success run outcome with active concurrent executions'''
@@ -750,7 +757,7 @@ class TestIgnoreStatusRuns(BaseTestCase):
                 'workflow_id': workflow_id,
                 'status': u'failed',
                 'parameters': None,
-                'products': None,
+                'products': {},
                 'executions': [{
                     'execution_id': 1,
                     'step': u'step:0',
@@ -831,7 +838,7 @@ class TestIgnoreStatusRuns(BaseTestCase):
                 'workflow_id': workflow_id,
                 'status': u'failed',
                 'parameters': None,
-                'products': None,
+                'products': {},
                 'executions': [
                     {
                         'execution_id': 1,
@@ -920,7 +927,7 @@ class TestIgnoreStatusRuns(BaseTestCase):
                 'workflow_id': workflow_id,
                 'status': u'failed',
                 'parameters': None,
-                'products': None,
+                'products': {},
                 'executions': [{
                     'execution_id': 1,
                     'step': u'step:0',
@@ -1003,7 +1010,7 @@ class TestRunTimedoutCases(BaseTestCase):
                 'workflow_id': workflow_id,
                 'status': u'timedout',
                 'parameters': None,
-                'products': None,
+                'products': {},
                 'executions': [
                     {
                         'execution_id': 1,
@@ -1087,7 +1094,7 @@ class TestRunTimedoutCases(BaseTestCase):
                 'workflow_id': workflow_id,
                 'status': u'timedout',
                 'parameters': None,
-                'products': None,
+                'products': {},
                 'executions': [
                     {
                         'execution_id': 1,
@@ -1177,7 +1184,7 @@ class TestInvalidRunCase(BaseTestCase):
                 'workflow_id': workflow_id,
                 'status': u'invalidated',
                 'parameters': None,
-                'products': None,
+                'products': {},
                 'executions': [
                     {
                         'execution_id': 1,
@@ -1193,7 +1200,6 @@ class TestInvalidRunCase(BaseTestCase):
             raise Exception('run not completing')
 
     def test_ignore_invalidated_case(self, client):
-        """Test ignore of invalidated run."""
         name = u'test ignore invalidated run'
         specification = '\n'.join([
             'name: %s' % name,
@@ -1260,7 +1266,7 @@ class TestInvalidRunCase(BaseTestCase):
                 'workflow_id': workflow_id,
                 'status': u'invalidated',
                 'parameters': None,
-                'products': None,
+                'products': {},
                 'executions': [
                     {
                         'execution_id': 1,
