@@ -6,6 +6,8 @@ from flux.engine.rule import Environment, RuleList
 from flux.exceptions import *
 from flux.models import Operation, WorkflowExecution
 
+from spire.support.logs import LogHelper
+log = LogHelper('flux')
 class Step(Element):
     """A workflow element."""
 

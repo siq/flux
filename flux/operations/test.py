@@ -1,4 +1,5 @@
 from scheme import *
+from scheme.surrogate import surrogate
 from spire.util import uniqid
 
 from flux.operations.operation import *
@@ -16,11 +17,18 @@ class TestOperation(Operation):
         'phase': 'operation',
         'schema': Structure({
             'outcome': Token(default='completed'),
+            'output': Map(Surrogate(nonempty=True), Token(nonempty=True)),
             'duration': Integer(default=5),
         }),
         'outcomes': {
-            'completed': {'outcome': 'success'},
-            'failed': {'outcome': 'failure'},
+            'completed': {
+                'outcome': 'success',
+                'schema': Map(Surrogate(nonempty=True), Token(nonempty=True)),
+            },
+            'failed': {
+                'outcome': 'failure',
+                'schema': Map(Surrogate(nonempty=True), Token(nonempty=True)),
+            },
         },
     }
 
@@ -29,8 +37,13 @@ class TestOperation(Operation):
         input = data['state'].get('input') or {}
 
         expected_outcome = input.get('outcome', 'completed')
+        output = input.get('output')
+        if output:
+            output = {k: surrogate(v) for k,v in output.iteritems()}
+        else:
+            output = None
         if expected_outcome in ('completed', 'failed'):
-            self.push(id, self.outcome(expected_outcome))
+            self.push(id, self.outcome(expected_outcome, output))
 
     def initiate(self, session, data):
         input = data.get('input') or {}
