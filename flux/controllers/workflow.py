@@ -1,10 +1,16 @@
 from mesh.exceptions import OperationError
+from mesh.standard import bind
 from spire.mesh import ModelController, support_returning
 from spire.schema import SchemaDependency, IntegrityError
+from spire.support.logs import LogHelper
 
+from flux.bindings import platoon
 from flux.models import *
 from flux.resources import Workflow as WorkflowResource
 from flux.engine.workflow import Workflow as WorkflowEngine
+
+log = LogHelper('flux')
+Event = bind(platoon, 'platoon/1.0/event')
 
 class WorkflowController(ModelController):
     resource = WorkflowResource
@@ -75,6 +81,10 @@ class WorkflowController(ModelController):
             session.commit()
         except IntegrityError:
             raise OperationError(token='duplicate-workflow-name')
+        try:
+            Event.create(topic='workflow:changed', aspects={'id': self.id})
+        except Exception:
+            log('exception', 'failed to fire workflow:changed event')
         return subject
 
     def _annotate_resource(self, request, model, resource, data):
