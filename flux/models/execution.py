@@ -50,6 +50,8 @@ class WorkflowExecution(Model):
         return self.run.workflow
 
     def abort(self, session):
+        if not self.is_active:
+            return
         self.status = 'aborted'
         self.ended = current_timestamp()
         try:

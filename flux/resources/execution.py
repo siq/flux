@@ -28,3 +28,18 @@ class Execution(Resource):
         fields = {
             'status': Enumeration('aborted', nonempty=True),
         }
+
+    class task:
+        endpoint = ('TASK', 'execution')
+        title = 'Initiating a execution task'
+        schema = Structure(
+            structure={
+                'abort-run': {
+                    'id': UUID(nonempty=True),
+                },
+            },
+            nonempty=True, polymorphic_on='task')
+        responses = {
+            OK: Response(),
+            INVALID: Response(Errors),
+        }

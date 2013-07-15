@@ -70,8 +70,10 @@ class Run(Model):
         return len(self.executions.all()) + 1
 
     def abort_executions(self, session):
-        for execution in self.active_executions.with_lockmode('update').all():
+        for execution in self.active_executions.all():
+            session.refresh(execution, lockmode='update')
             execution.abort(session)
+            session.commit()
 
     def associate_product(self, token, product):
         self.products[token] = Product(product=product, token=token)

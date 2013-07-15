@@ -58,7 +58,7 @@ class RunController(ModelController):
         status = data['status']
         if status == 'aborted' and subject.is_active:
             subject.initiate_abort(session)
-            session.call_after_commit(ScheduledTask.queue_http_task, 'abort-run',
+            session.call_after_commit(ScheduledTask.queue_http_task, 'abort-executions',
                 self.flux.prepare('flux/1.0/run', 'task', None,
                     {'task': 'abort-executions', 'id': subject.id}))
         elif status == 'pending' and subject.status == 'prepared':

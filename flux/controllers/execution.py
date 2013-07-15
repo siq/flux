@@ -7,6 +7,8 @@ from flux.bindings import platoon
 from flux.models import WorkflowExecution as WorkflowExecutionModel
 from flux.resources import Execution
 
+ScheduledTask = bind(platoon, 'platoon/1.0/scheduledtask')
+
 class ExecutionController(ModelController):
     """A step execution controller"""
 
@@ -26,7 +28,23 @@ class ExecutionController(ModelController):
             subject.abort(session)
             session.commit()
 
-            self.flux.execute('flux/1.0/run', 'update', subject.run_id,
-                              {'status': 'aborted'})
+            ScheduledTask.queue_http_task('abort-run',
+                self.flux.prepare('flux/1.0/execution', 'task', None,
+                    {'task': 'abort-run', 'id': subject.id}))
 
         response({'id': subject.id})
+
+    def task(self, request, response, subject, data):
+        session = self.schema.session
+        if 'id' in data:
+            try:
+                subject = self.model.load(session, id=data['id'], lockmode='update')
+            except NoResultFound:
+                return
+
+        task = data['task']
+        if task == 'abort-run':
+            run = subject.run
+            run.initiate_abort(session)
+            run.abort_executions(session)
+            session.commit()
