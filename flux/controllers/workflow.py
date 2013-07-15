@@ -29,7 +29,14 @@ class WorkflowController(ModelController):
             session.commit()
         except IntegrityError:
             raise OperationError(token='duplicate-workflow-name')
+
+        if 'id' in data:
+            self._create_change_event(subject)
         return subject
+
+    def delete(self, request, response, subject, data):
+        super(WorkflowController, self).delete(request, response, subject, data)
+        self._create_change_event(subject)
 
     def generate(self, request, response, subject, data):
         name = data['name']
@@ -75,16 +82,15 @@ class WorkflowController(ModelController):
             return subject
 
         session = self.schema.session
-        subject.update(session, **data)
+        changed = subject.update(session, **data)
 
         try:
             session.commit()
         except IntegrityError:
             raise OperationError(token='duplicate-workflow-name')
-        try:
-            Event.create(topic='workflow:changed', aspects={'id': self.id})
-        except Exception:
-            log('exception', 'failed to fire workflow:changed event')
+
+        if changed:
+            self._create_change_event(subject)
         return subject
 
     def _annotate_resource(self, request, model, resource, data):
@@ -100,3 +106,9 @@ class WorkflowController(ModelController):
                 resource['form'] = None
         if 'specification' in include:
             resource['specification'] = model.specification
+
+    def _create_change_event(self, subject):
+        try:
+            Event.create(topic='workflow:changed', aspects={'id': subject.id})
+        except Exception:
+            log('exception', 'failed to fire workflow:changed event')

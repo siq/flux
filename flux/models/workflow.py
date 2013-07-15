@@ -56,8 +56,16 @@ class Workflow(Model):
         return subject
 
     def update(self, session, **attrs):
+        changed = False
+        if 'name' in attrs and attrs['name'] != self.name:
+            changed = True
+        elif 'specfication' in attrs and attrs['specification'] != self.specification:
+            changed = True
+
         self.update_with_mapping(attrs, ignore='id')
         self.modified = current_timestamp()
+
+        return changed
 
     @validates('specification')
     def validate_specification(self, name, value):
