@@ -30,8 +30,6 @@ class WorkflowController(ModelController):
         except IntegrityError:
             raise OperationError(token='duplicate-workflow-name')
 
-        if 'id' in data:
-            self._create_change_event(subject)
         return subject
 
     def delete(self, request, response, subject, data):
