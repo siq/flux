@@ -27,6 +27,10 @@ class Request(Resource):
             'title': Text(),
             'surrogate': Token(nonempty=True),
         }, nonempty=True))
+        products = Map(key=Token(nonempty=True), value=Structure({
+            'title': Text(),
+            'product': Surrogate(nonempty=True),
+        }, nonempty=True))
 
     class create(Resource.create):
         support_returning = True
