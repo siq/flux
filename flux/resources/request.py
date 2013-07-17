@@ -23,7 +23,10 @@ class Request(Resource):
             'title': Text(),
             'attachment': Surrogate(nonempty=True),
         }, nonempty=True))
-
+        slots = Map(key=Token(nonempty=True), value=Structure({
+            'title': Text(),
+            'surrogate': Token(nonempty=True),
+        }, nonempty=True))
 
     class create(Resource.create):
         support_returning = True
