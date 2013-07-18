@@ -1,4 +1,4 @@
-from spire.mesh import ModelController
+from spire.mesh import ModelController, support_returning
 from spire.schema import *
 from flux.resources.request import Request as RequestResource
 from flux.models.request import Request
@@ -29,3 +29,17 @@ class RequestController(ModelController):
         session.commit()
 
         return subject
+    
+    def _annotate_resource(self, http_request, model, resource, data):
+        resource['attachments'] = attachments = []
+        for attachment in model.attachments:
+            attachments.append(attachment.extract_dict('token title attachment'))
+        
+        resource['slots'] = slots = {}
+        for key, value in model.slots.iteritems():
+            slots[key] = value.extract_dict('title slot')
+            
+        resource['products'] = products = {}
+        for key, value in model.products.iteritems():
+            products[key] = value.extract_dict('title product')
+        

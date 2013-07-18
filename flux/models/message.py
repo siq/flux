@@ -7,7 +7,7 @@ from sqlalchemy.orm.collections import attribute_mapped_collection
 
 from flux.constants import *
 from scheme import current_timestamp
-from flux.models.Request import Request
+from flux.models.request import Request
 
 __all__ = ('Message',)
 
