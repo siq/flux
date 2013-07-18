@@ -7,4 +7,6 @@ API = Bundle('flux',
     mount(Operation, 'flux.controllers.operation.OperationController'),
     mount(Run, 'flux.controllers.run.RunController'),
     mount(Workflow, 'flux.controllers.workflow.WorkflowController'),
+    mount(Request, 'flux.controllers.request.RequestController'),
+    mount(Message, 'flux.controllers.message.MessageController')
 )
