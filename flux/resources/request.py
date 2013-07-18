@@ -31,10 +31,6 @@ class Request(Resource):
             'title': Text(),
             'product': Surrogate(nonempty=True),
         }, nonempty=True))
-        products = Map(key=Token(nonempty=True), value=Structure({
-            'title': Text(),
-            'product': Surrogate(nonempty=True),
-        }, nonempty=True))
 
     class create(Resource.create):
         support_returning = True
@@ -67,7 +63,7 @@ class Request(Resource):
         }
 
     class task:
-        endpoint = ('TASK', 'run')
+        endpoint = ('TASK', 'request')
         title = 'Initiating a request task'
         schema = Structure(
             structure={

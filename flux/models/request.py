@@ -6,7 +6,6 @@ from spire.support.logs import LogHelper
 from sqlalchemy.orm.collections import attribute_mapped_collection
 
 from flux.constants import *
-from flux.models.message import Message
 
 __all__ = ('Request', 'RequestAttachment', 'RequestSlot', 'RequestProduct')
 
@@ -34,7 +33,7 @@ class Request(Model):
     products = relationship('RequestProduct', cascade='all,delete-orphan', 
                                passive_deletes=True, backref='request',
                                collection_class=attribute_mapped_collection('token'))    
-    messages = relationship(Message, cascade='all,delete-orphan', 
+    messages = relationship('Message', cascade='all,delete-orphan', 
                                passive_deletes=True, backref='request')
     
     @classmethod
@@ -42,11 +41,11 @@ class Request(Model):
         request = cls(**attrs)
         if attachments:
             for attachment in attachments:
-                self.attachments.append(RequestAttachment(**attachment))
+                request.attachments.append(RequestAttachment(**attachment))
         
         if slots:
             for key, value in slots.iteritems():
-                self.slots[key] = RequestSlot(token=key, **value)
+                request.slots[key] = RequestSlot(token=key, **value)
                 
         session.add(request)
         return request
