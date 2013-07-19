@@ -1,8 +1,15 @@
-from spire.mesh import ModelController, support_returning
+from spire.mesh import ModelController, support_returning, MeshDependency
+from mesh.standard import bind
 from spire.schema import *
 from flux.resources.request import Request as RequestResource
 from flux.models.request import Request
 from flux.models.message import Message
+from flux.bindings import platoon
+from spire.support.logs import LogHelper
+
+ScheduledTask = bind(platoon, 'platoon/1.0/scheduledtask')
+Event = bind(platoon, 'platoon/1.0/event')
+log = LogHelper('flux')
 
 class RequestController(ModelController):
     resource = RequestResource
@@ -11,6 +18,8 @@ class RequestController(ModelController):
     model = Request
     mapping = 'id name status originator assignee'
     schema = SchemaDependency('flux')
+    flux = MeshDependency('flux')
+    platoon = MeshDependency('platoon')
     
     @support_returning
     def create(self, request, response, subject, data):
@@ -27,6 +36,11 @@ class RequestController(ModelController):
             Message.create(session, subject.id, **message)
 
         session.commit()
+        
+        if subject.status == 'pending':
+            ScheduledTask.queue_http_task('initiate-request',
+                self.flux.prepare('flux/1.0/request', 'task', None,
+                {'task': 'initiate-request', 'id': subject.id}))        
 
         return subject
     
@@ -42,4 +56,36 @@ class RequestController(ModelController):
         resource['products'] = products = {}
         for key, value in model.products.iteritems():
             products[key] = value.extract_dict('title product')
-        
+            
+    @support_returning
+    def update(self, request, response, subject, data):
+        if not data:
+            return subject
+
+        session = self.schema.session
+        new_status = subject.update(session, **data)
+        session.commit()
+
+        if new_status == 'pending':
+            ScheduledTask.queue_http_task('initiate-request',
+                self.flux.prepare('flux/1.0/request', 'task', None,
+                {'task': 'initiate-request', 'id': subject.id})) 
+        elif new_status == 'completed':
+            try:
+                Event.create(topic='request:completed', aspects={'id': subject.id})  
+            except Exception:
+                log('exception', 'failed to fire request:completed event')
+        return subject 
+    
+    def task(self, request, response, subject, data):
+        session = self.schema.session
+        if 'id' in data:
+            try:
+                subject = self.model.load(session, id=data['id'], lockmode='update')
+            except NoResultFound:
+                return
+
+        task = data['task']
+        if task == 'initiate-request':
+            subject.initiate(session)
+            session.commit() 
