@@ -48,7 +48,59 @@ class Request(Model):
                 request.slots[key] = RequestSlot(token=key, **value)
                 
         session.add(request)
+        
         return request
+    
+    def update(self, session, **attrs):
+        attachments = attrs.pop('attachments', None)
+        if attachments:
+            self.attachments = []            
+            for attachment in attachments:
+                self.attachments.append(RequestAttachment(**attachment))
+
+        slots = attrs.pop('slots', None)
+        if slots:
+            self.slots = {}
+            session.flush()
+            for key, value in slots.iteritems():
+                self.slots[key] = RequestSlot(token=key, **value)
+
+        products = attrs.pop('products', None)
+        if products:
+            self.products = {}
+            session.flush()
+            for key, value in products.iteritems():
+                self.products[key] = RequestProduct(token=key, **value)
+
+        # assuming message is not specified during update
+
+        new_status = None
+        status = attrs.pop('status', None)
+        if status:
+            new_status = self._update_status(status)
+        
+        self.update_with_mapping(attrs)
+        return new_status
+    
+    def _update_status(self, status):
+        if self.status == status:
+            return
+        
+        if self.status == 'prepared':
+            if status == 'pending':
+                self.status = status
+                return status
+            else:
+                raise ValidationError('invalid-transition')
+        elif self.status == 'pending':
+            if status == 'completed':
+                self.status = status
+                return status
+            else:
+                raise ValidationError('invalid-transition')
+        
+    def initiate(self, session):
+        print("!!!!!!request is initiated!!!!!!")    
         
 class RequestAttachment(Model):
     """An attachment."""
