@@ -20,6 +20,7 @@ class RequestController(ModelController):
     schema = SchemaDependency('flux')
     flux = MeshDependency('flux')
     platoon = MeshDependency('platoon')
+    docket_entity = MeshDependency('docket.entity')
     
     @support_returning
     def create(self, request, response, subject, data):
@@ -87,5 +88,18 @@ class RequestController(ModelController):
 
         task = data['task']
         if task == 'initiate-request':
-            subject.initiate(session)
+            email = self._get_email(subject.assignee)
+            if email:
+                subject.initiate(session, email)
+            else:
+                subject.status = 'claimed' # need to change
             session.commit() 
+
+    def _get_email(self, assignee):
+        try:
+            DocketSubject = self.docket_entity.bind('docket.entity/1.0/security/1.0/subject')
+            usr = DocketSubject.get(assignee)
+            return usr.email
+        except Exception:
+            log('exception', 'failed to retrieve assignee "%s" email address' % assignee)
+            return
