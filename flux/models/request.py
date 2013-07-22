@@ -6,11 +6,13 @@ from spire.support.logs import LogHelper
 from sqlalchemy.orm.collections import attribute_mapped_collection
 
 from flux.constants import *
+from flux.bindings import truss
 
 __all__ = ('Request', 'RequestAttachment', 'RequestSlot', 'RequestProduct')
 
 schema = Schema('flux')
 log = LogHelper('flux')
+Msg = bind(truss, 'truss/1.0/message')
 
 class Request(Model):
     """An request."""
@@ -99,8 +101,14 @@ class Request(Model):
             else:
                 raise ValidationError('invalid-transition')
         
-    def initiate(self, session):
-        print("!!!!!!request is initiated!!!!!!")    
+    def initiate(self, session, email):
+        self._send_init_email(email)
+
+    def _send_init_email(self, email):
+        recipients = [{'to': email.split(',')}]
+        email_subject = 'Request "%s" initiated' % self.name
+        body = 'The request named "%s" has been initiated.' % self.name
+        Msg.create(recipients=recipients, subject=email_subject, body=body) 
         
 class RequestAttachment(Model):
     """An attachment."""
