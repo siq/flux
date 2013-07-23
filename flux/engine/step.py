@@ -1,13 +1,14 @@
 from scheme import *
 from scheme.util import recursive_merge
+from spire.support.logs import LogHelper
 
 from flux.engine.interpolation import Interpolator
 from flux.engine.rule import Environment, RuleList
 from flux.exceptions import *
 from flux.models import Operation, WorkflowExecution
 
-from spire.support.logs import LogHelper
 log = LogHelper('flux')
+
 class Step(Element):
     """A workflow element."""
 
