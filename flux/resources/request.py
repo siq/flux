@@ -70,6 +70,10 @@ class Request(Resource):
                 'initiate-request': {
                     'id': UUID(nonempty=True),
                 },
+                'complete-request-operation': {
+                    'process_id': UUID(nonempty=True), 
+                    'request_id': UUID(nonempty=True),
+                },
             },
             nonempty=True,
             polymorphic_on='task')

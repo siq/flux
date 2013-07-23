@@ -1,11 +1,12 @@
 from spire.mesh import ModelController, support_returning, MeshDependency
 from mesh.standard import bind
 from spire.schema import *
+from spire.support.logs import LogHelper
 from flux.resources.request import Request as RequestResource
 from flux.models.request import Request
 from flux.models.message import Message
 from flux.bindings import platoon
-from spire.support.logs import LogHelper
+from flux.operations import *
 
 ScheduledTask = bind(platoon, 'platoon/1.0/scheduledtask')
 Event = bind(platoon, 'platoon/1.0/event')
@@ -88,18 +89,28 @@ class RequestController(ModelController):
 
         task = data['task']
         if task == 'initiate-request':
-            email = self._get_email(subject.assignee)
-            if email:
-                subject.initiate(session, email)
+            assignee_email = self._get_email(subject.assignee)
+            originator_email = self._get_email(subject.originator)
+            if assignee_email:
+                subject.initiate(session, assignee_email, originator_email)
             else:
-                subject.status = 'claimed' # need to change
+                subject.status = 'failed'
             session.commit() 
+        elif task == 'complete-request-operation':
+            CreateRequest().complete(session, data)
 
-    def _get_email(self, assignee):
+    def _get_email(self, user):
         try:
             DocketSubject = self.docket_entity.bind('docket.entity/1.0/security/1.0/subject')
-            usr = DocketSubject.get(assignee)
+            usr = DocketSubject.get(user)
             return usr.email
         except Exception:
-            log('exception', 'failed to retrieve assignee "%s" email address' % assignee)
+            log('exception', 'failed to retrieve assignee "%s" email address' % user)
             return
+
+    def operation(self, request, response, subject, data):
+        operation = OPERATIONS.get(data['subject'])
+        if operation:
+            operation().execute(self.schema.session, response, data)
+        else:
+            raise OperationError('invalid-subject')

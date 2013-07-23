@@ -1,9 +1,16 @@
 from scheme import *
+from scheme.surrogate import surrogate
+from mesh.standard import bind
 from spire.util import uniqid
+from spire.support.logs import LogHelper
+from spire.schema import NoResultFound
 
 from flux.operations.operation import *
+from flux.models.request import Request as RequestModel
 
 __all__ = ('CreateRequest',)
+
+log = LogHelper('flux')
 
 class CreateRequest(Operation):
     """A workflow operation which creates a request."""
@@ -58,7 +65,43 @@ class CreateRequest(Operation):
     }
 
     def complete(self, session, data):
-        pass
+        process_id = data['process_id']
+        try:
+            subject = RequestModel.load(session, id=data['request_id'])
+        except NoResultFound:
+            return self.push(process_id, self.outcome('failed'))
+
+        outcome = ('completed' if subject.status == 'completed' else 'failed')
+        self.push(process_id, self.outcome(outcome, {
+            'request': surrogate.construct('flux.surrogates.request', subject),
+        }))
 
     def initiate(self, session, data):
-        pass
+        Request = self.docket_entity.bind('docket.entity/1.0/flux/1.0/request')
+        id = uniqid()
+
+        attrs = data['input']
+        
+        wait_for_completion = attrs.pop('wait_for_completion', True)
+        if wait_for_completion:    
+            SubscribedTask.queue_http_task('complete-request-operation',
+                self.flux.prepare('flux/1.0/request', 'task', None,
+                    {'task': 'complete-request-operation', 'request_id': id,
+                        'process_id': data['id']}),
+                topic='request:completed',
+                aspects={'id': id},
+                timeout=259200)  
+            
+        attrs['id'] = id          
+        try:
+            request = Request.create(**attrs)
+        except Exception:
+            log('exception', 'initiation of create-request operation failed')
+            return self.invalidation(error='failed')
+        
+        if wait_for_completion:
+            return self.executing()
+        else:
+            outcome = ('created' if request.status in ('pending', 'prepared') else 'failed')
+            return self.outcome(outcome, {
+            'request': surrogate.construct('flux.surrogates.request', request),})
