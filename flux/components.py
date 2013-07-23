@@ -36,9 +36,6 @@ ENTITY_REGISTRATIONS = [
         title='Request',
         specification=API.describe(['request']),
         change_event='request:changed',
-        cached_attributes={
-            'status': {'type': 'text'},
-        },
     ),                        
 ]
 
