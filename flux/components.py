@@ -30,6 +30,16 @@ ENTITY_REGISTRATIONS = [
             'status': {'type': 'text'},
         },
     ),
+    Registration(
+        id='flux:request',
+        name='request',
+        title='Request',
+        specification=API.describe(['request']),
+        change_event='request:changed',
+        cached_attributes={
+            'status': {'type': 'text'},
+        },
+    ),                        
 ]
 
 GENERATED_BY = Intent(

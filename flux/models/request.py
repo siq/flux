@@ -101,14 +101,15 @@ class Request(Model):
             else:
                 raise ValidationError('invalid-transition')
         
-    def initiate(self, session, email):
-        self._send_init_email(email)
+    def initiate(self, session, assignee_email, originator_email):
+        self._send_init_email(assignee_email, originator_email)
 
-    def _send_init_email(self, email):
-        recipients = [{'to': email.split(',')}]
+    def _send_init_email(self, assignee_email, originator_email):
+        sender = originator_email
+        recipients = [{'to': assignee_email.split(',')}]
         email_subject = 'Request "%s" initiated' % self.name
         body = 'The request named "%s" has been initiated.' % self.name
-        Msg.create(recipients=recipients, subject=email_subject, body=body) 
+        Msg.create(sender=sender, recipients=recipients, subject=email_subject, body=body) 
         
 class RequestAttachment(Model):
     """An attachment."""
