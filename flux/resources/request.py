@@ -23,7 +23,14 @@ class Request(Resource):
             'title': Text(),
             'attachment': Surrogate(nonempty=True),
         }, nonempty=True))
-
+        slots = Map(key=Token(nonempty=True), value=Structure({
+            'title': Text(),
+            'slot': Token(nonempty=True),
+        }, nonempty=True))
+        products = Map(key=Token(nonempty=True), value=Structure({
+            'title': Text(),
+            'product': Surrogate(nonempty=True),
+        }, nonempty=True))
 
     class create(Resource.create):
         support_returning = True
@@ -56,12 +63,16 @@ class Request(Resource):
         }
 
     class task:
-        endpoint = ('TASK', 'run')
+        endpoint = ('TASK', 'request')
         title = 'Initiating a request task'
         schema = Structure(
             structure={
                 'initiate-request': {
                     'id': UUID(nonempty=True),
+                },
+                'complete-request-operation': {
+                    'process_id': UUID(nonempty=True), 
+                    'request_id': UUID(nonempty=True),
                 },
             },
             nonempty=True,

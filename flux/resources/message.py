@@ -1,6 +1,8 @@
 from mesh.standard import *
 from scheme import *
 
+__all__ = ('Message',)
+
 class Message(Resource):
     """A request message."""
 
