@@ -1,12 +1,12 @@
+from mesh.standard import bind
 from scheme import *
 from scheme.surrogate import surrogate
-from mesh.standard import bind
-from spire.util import uniqid
-from spire.support.logs import LogHelper
 from spire.schema import NoResultFound
+from spire.support.logs import LogHelper
+from spire.util import uniqid
 
-from flux.operations.operation import *
 from flux.models.request import Request as RequestModel
+from flux.operations.operation import *
 
 __all__ = ('CreateRequest',)
 
@@ -104,4 +104,4 @@ class CreateRequest(Operation):
         else:
             outcome = ('created' if request.status in ('pending', 'prepared') else 'failed')
             return self.outcome(outcome, {
-            'request': surrogate.construct('flux.surrogates.request', request),})
+                'request': surrogate.construct('flux.surrogates.request', request),})

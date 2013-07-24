@@ -1,12 +1,13 @@
-from spire.mesh import ModelController, support_returning, MeshDependency
 from mesh.standard import bind
+from spire.mesh import ModelController, support_returning, MeshDependency
 from spire.schema import *
 from spire.support.logs import LogHelper
-from flux.resources.request import Request as RequestResource
-from flux.models.request import Request
-from flux.models.message import Message
+
 from flux.bindings import platoon
+from flux.models.message import Message
+from flux.models.request import Request
 from flux.operations import *
+from flux.resources.request import Request as RequestResource
 
 ScheduledTask = bind(platoon, 'platoon/1.0/scheduledtask')
 Event = bind(platoon, 'platoon/1.0/event')
@@ -21,7 +22,6 @@ class RequestController(ModelController):
     schema = SchemaDependency('flux')
     flux = MeshDependency('flux')
     platoon = MeshDependency('platoon')
-    docket_entity = MeshDependency('docket.entity')
     
     @support_returning
     def create(self, request, response, subject, data):
@@ -89,24 +89,16 @@ class RequestController(ModelController):
 
         task = data['task']
         if task == 'initiate-request':
-            assignee_email = self._get_email(subject.assignee)
-            originator_email = self._get_email(subject.originator)
-            if assignee_email:
-                subject.initiate(session, assignee_email, originator_email)
-            else:
+            status = subject.initiate(session, subject)            
+            if not status:
                 subject.status = 'failed'
+                try:
+                    Event.create(topic='request:completed', aspects={'id': subject.id})  
+                except Exception:
+                    log('exception', 'failed to fire request:completed event')                
             session.commit() 
         elif task == 'complete-request-operation':
             CreateRequest().complete(session, data)
-
-    def _get_email(self, user):
-        try:
-            DocketSubject = self.docket_entity.bind('docket.entity/1.0/security/1.0/subject')
-            usr = DocketSubject.get(user)
-            return usr.email
-        except Exception:
-            log('exception', 'failed to retrieve assignee "%s" email address' % user)
-            return
 
     def operation(self, request, response, subject, data):
         operation = OPERATIONS.get(data['subject'])

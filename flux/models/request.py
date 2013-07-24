@@ -1,6 +1,7 @@
 from mesh.standard import OperationError, bind
 from scheme import current_timestamp
-from spire.mesh import Surrogate
+from spire.core import Unit
+from spire.mesh import Surrogate, MeshDependency
 from spire.schema import *
 from spire.support.logs import LogHelper
 from sqlalchemy.orm.collections import attribute_mapped_collection
@@ -101,12 +102,33 @@ class Request(Model):
             else:
                 raise ValidationError('invalid-transition')
         
-    def initiate(self, session, assignee_email, originator_email):
-        self._send_init_email(assignee_email, originator_email)
+    def initiate(self, session, subject):
+        assignee = self._get_user(subject.assignee)
+        if not assignee:
+            return False
+        originator = self._get_user(subject.originator)
+        if not originator:
+            return False
+        
+        if assignee.email:
+            self._send_init_email(subject, assignee, originator)
+            return True
+        else:
+            return False
+        
+    def _get_user(self, user_id):
+        try:
+            docket_dependency = DocketDependency()
+            DocketSubject = docket_dependency.docket_entity.bind('docket.entity/1.0/security/1.0/subject')            
+            usr = DocketSubject.get(user_id)
+            return usr
+        except Exception:
+            log('exception', 'failed to retrieve user subject with user id "%s"' % user_id)
+            return        
 
-    def _send_init_email(self, assignee_email, originator_email):
-        sender = originator_email
-        recipients = [{'to': assignee_email.split(',')}]
+    def _send_init_email(self, subject, assignee, originator):
+        sender = originator.email
+        recipients = [{'to': assignee.email.split(',')}]
         email_subject = 'Request "%s" initiated' % self.name
         body = 'The request named "%s" has been initiated.' % self.name
         Msg.create(sender=sender, recipients=recipients, subject=email_subject, body=body) 
@@ -151,3 +173,6 @@ class RequestProduct(Model):
     token = Token(nullable=False)
     title = Text()
     product = Surrogate(nullable=False)
+    
+class DocketDependency(Unit):
+    docket_entity = MeshDependency('docket.entity')    

@@ -1,5 +1,6 @@
 from spire.mesh import ModelController
 from spire.schema import *
+
 from flux.resources.message import Message as MessageResource
 from flux.models.message import Message
 
