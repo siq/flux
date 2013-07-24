@@ -83,11 +83,11 @@ class Run(Model):
         Event.create(topic='run:completed', aspects={'id': self.id})
 
     def contribute_values(self):
-        run = {'id': self.id, 'name': self.name, 'started': self.started}
+        run = {'id': self.id, 'env': {}, 'name': self.name, 'started': self.started}
+        if self.workflow.workflow.parameters:
+            run['env'].update(self.workflow.workflow.parameters)
         if self.parameters:
-            run['env'] = self.parameters
-        else:
-            run['env'] = {}
+            run['env'].update(self.parameters)
         return {'run': run}
 
     @classmethod

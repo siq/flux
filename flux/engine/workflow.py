@@ -17,13 +17,14 @@ class Workflow(Element):
         'name': Text(nonempty=True),
         'entry': Token(nonempty=True),
         'form': Form.schema,
+        'parameters': Map(Field(nonempty=True), Token(nonempty=True)),
         'products': Map(Product.schema, Token(nonempty=True), nonnull=True),
         'preoperation': RuleList.schema,
         'postoperation': RuleList.schema,
         'prerun': RuleList.schema,
         'postrun': RuleList.schema,
         'steps': Map(Step.schema, Token(nonempty=True), nonnull=True),
-    }, key_order='name entry form products prerun postrun preoperation postoperation steps')
+    }, key_order='name entry form parameters products prerun postrun preoperation postoperation steps')
 
     def initiate(self, session, run):
         log('info', 'initiating %r', run)

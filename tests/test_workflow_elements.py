@@ -66,7 +66,7 @@ class BaseTestCase(MeshTestCase):
                     continue
 
 
-class TestParamsSpecification(BaseTestCase):
+class TestFormSpecification(BaseTestCase):
     def test_parse_valid_form(self, client):
         """Tests verification of a valid form"""
         specification = '\n'.join([
