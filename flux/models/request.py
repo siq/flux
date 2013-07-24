@@ -175,4 +175,4 @@ class RequestProduct(Model):
     product = Surrogate(nullable=False)
     
 class DocketDependency(Unit):
-    docket_entity = MeshDependency('docket.entity')    
+    docket_entity = MeshDependency('docket.entity')
