@@ -40,6 +40,7 @@ class CreateRequest(Operation):
                 'author': Token(nonempty=True),
                 'message': Text(nonempty=True),
             }),
+            'template': Text(nonempty=True),
             'wait_for_completion': Boolean(default=True),
         }),
         'outcomes': {
@@ -69,16 +70,17 @@ class CreateRequest(Operation):
     }
 
     def complete(self, session, data):
+        Request = self.docket_entity.bind('docket.entity/1.0/flux/1.0/request')
         process_id = data['process_id']
         try:
-            subject = RequestModel.load(session, id=data['request_id'])
+            subject = Request.get(data['request_id'])
         except NoResultFound:
             return self.push(process_id, self.outcome('failed'))
 
         outcome = ('completed' if subject.status == 'completed' else 'failed')
         self.push(process_id, self.outcome(outcome, {
             'request': surrogate.construct('flux.surrogates.request', subject),
-            'products': subject.product,
+            'products': subject.products,
         }))
 
     def initiate(self, session, data):
