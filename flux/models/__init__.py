@@ -1,3 +1,4 @@
+from .emailtemplate import *
 from .execution import *
 from .message import *
 from .operation import *

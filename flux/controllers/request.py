@@ -1,11 +1,10 @@
 from mesh.standard import bind
-from spire.mesh import ModelController, support_returning, MeshDependency
+from spire.mesh import MeshDependency, ModelController, support_returning
 from spire.schema import *
 from spire.support.logs import LogHelper
 
 from flux.bindings import platoon
-from flux.models.message import Message
-from flux.models.request import Request
+from flux.models import EmailTemplate, Message, Request
 from flux.operations import *
 from flux.resources.request import Request as RequestResource
 
@@ -18,15 +17,23 @@ class RequestController(ModelController):
     version = (1, 0)
     
     model = Request
-    mapping = 'id name status originator assignee'
+    mapping = 'id name status originator assignee template'
     schema = SchemaDependency('flux')
     flux = MeshDependency('flux')
     platoon = MeshDependency('platoon')
     
     @support_returning
     def create(self, request, response, subject, data):
-        session = self.schema.session
+        session = self.schema.session       
         message = data.pop('message', None)
+
+        # Need to handle the template first 
+        # because we need to insert the id later to the request table
+        template = data.pop('template', None)
+        if template:
+            templateObject = EmailTemplate.put(session, template)
+
+        data['template_id'] = templateObject.id
         subject = self.model.create(session, **data)
         
         try:

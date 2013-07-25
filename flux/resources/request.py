@@ -40,6 +40,7 @@ class Request(Resource):
                 'author': Token(nonempty=True),
                 'message': Text(nonempty=True),
             }),
+            'template': Text(nonempty=True),
         }
 
     class operation:

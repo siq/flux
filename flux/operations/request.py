@@ -53,6 +53,10 @@ class CreateRequest(Operation):
                 'outcome': 'success',
                 'schema': Structure({
                     'request': Surrogate(nonempty=True),
+                    'products': Map(key=Token(nonempty=True), value=Structure({
+                        'title': Text(),
+                        'product': Surrogate(nonempty=True),
+                    }))
                 }),
             },
             'failed': {
@@ -74,6 +78,7 @@ class CreateRequest(Operation):
         outcome = ('completed' if subject.status == 'completed' else 'failed')
         self.push(process_id, self.outcome(outcome, {
             'request': surrogate.construct('flux.surrogates.request', subject),
+            'products': subject.product,
         }))
 
     def initiate(self, session, data):

@@ -6,8 +6,9 @@ from spire.schema import *
 from spire.support.logs import LogHelper
 from sqlalchemy.orm.collections import attribute_mapped_collection
 
-from flux.constants import *
 from flux.bindings import truss
+from flux.constants import *
+from flux.models import EmailTemplate
 
 __all__ = ('Request', 'RequestAttachment', 'RequestSlot', 'RequestProduct')
 
@@ -27,6 +28,7 @@ class Request(Model):
     status = Enumeration(REQUEST_STATUSES, nullable=False, default='pending')
     originator = Token(nullable=False)
     assignee = Token(nullable=False)
+    template_id = Token(nullable=False)
     
     attachments = relationship('RequestAttachment', cascade='all,delete-orphan', 
                                passive_deletes=True, backref='request')
@@ -111,7 +113,7 @@ class Request(Model):
             return False
         
         if assignee.email:
-            self._send_init_email(subject, assignee, originator)
+            self._send_init_email(session, subject, assignee, originator)
             return True
         else:
             return False
@@ -126,11 +128,12 @@ class Request(Model):
             log('exception', 'failed to retrieve user subject with user id "%s"' % user_id)
             return        
 
-    def _send_init_email(self, subject, assignee, originator):
+    def _send_init_email(self, session, subject, assignee, originator):
+        template = EmailTemplate.load(session, id=subject.template_id)
         sender = originator.email
         recipients = [{'to': assignee.email.split(',')}]
         email_subject = 'Request "%s" initiated' % self.name
-        body = 'The request named "%s" has been initiated.' % self.name
+        body = template.evaluate({'request_id': subject.id, 'request_attch': subject.attachments, 'assignee': assignee.lastname, 'originator': originator.firstname})
         Msg.create(sender=sender, recipients=recipients, subject=email_subject, body=body) 
         
 class RequestAttachment(Model):
