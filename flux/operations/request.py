@@ -5,7 +5,6 @@ from spire.schema import NoResultFound
 from spire.support.logs import LogHelper
 from spire.util import uniqid
 
-from flux.models.request import Request as RequestModel
 from flux.operations.operation import *
 
 __all__ = ('CreateRequest',)
