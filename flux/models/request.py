@@ -128,37 +128,17 @@ class Request(Model):
             log('exception', 'failed to retrieve user subject with user id "%s"' % user_id)
             return        
 
-    def _convert_user_to_dict(self, user):
-        resource = {}
-        resource['id'] = user.id
-        resource['name'] = user.name
-        resource['domain_id'] = user.domain_id
-        resource['repository_id'] = user.repository_id
-        resource['external_id'] = user.external_id
-        resource['status'] = user.status
-        resource['firstname'] = user.firstname
-        resource['lastname'] = user.lastname
-        resource['email'] = user.email
-        resource['created'] = user.created
-        resource['modified'] = user.modified
-        return resource
-
     def _convert_request_to_dict(self):
-        resource = {}
-        resource['id'] = self.id
-        resource['name'] = self.name
-        resource['status'] = self.status
+        resource = self.extract_dict(attrs='id name status originator assignee template_id')
+
         resource['attachments'] = attachments = []
         for attachment in self.attachments:
             attachments.append(attachment.extract_dict('token title attachment'))
-        
+
         resource['slots'] = slots = {}
         for key, value in self.slots.iteritems():
             slots[key] = value.extract_dict('title slot')
-            
-        resource['products'] = products = {}
-        for key, value in self.products.iteritems():
-            products[key] = value.extract_dict('title product')
+
         return resource
 
     def _send_init_email(self, session, assignee, originator):
@@ -166,12 +146,12 @@ class Request(Model):
         sender = originator.email
         recipients = [{'to': assignee.email.split(',')}]
         email_subject = 'Request "%s" initiated' % self.name
-        print 'REQUEST...........: "%s"' % self._convert_request_to_dict()
-        print 'ASSIGNEE...........: "%s"' % self._convert_user_to_dict(assignee)
-        body = template.evaluate({'request': self._convert_request_to_dict(), 
-            'assignee': self._convert_user_to_dict(assignee), 
-            'originator': self._convert_user_to_dict(originator)})
-        print 'BODY...........: "%s"' % body
+        request_dict = self._convert_request_to_dict()
+        assignee_dict = assignee.extract_dict(
+            attrs='id domain_id name repository_id firstname lastname status email created modified last_login failure_count')
+        originator_dict = originator.extract_dict(
+            attrs='id domain_id name repository_id firstname lastname status email created modified last_login failure_count')
+        body = template.evaluate({'request': request_dict, 'assignee': assignee_dict, 'originator': originator_dict})
         Msg.create(sender=sender, recipients=recipients, subject=email_subject, body=body) 
         
 class RequestAttachment(Model):

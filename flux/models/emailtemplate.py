@@ -33,9 +33,5 @@ class EmailTemplate(Model):
     def evaluate(self, parameters=None):
         params = {}
         if parameters:
-            print 'ADRIAN TEST....................'
-            print parameters
             recursive_merge(params, parameters)
-        print 'ADRIAN TEST....................'
-        print params
         return interpolate_parameters(self.template, params)
