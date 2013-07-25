@@ -17,7 +17,7 @@ class RequestController(ModelController):
     version = (1, 0)
     
     model = Request
-    mapping = 'id name status originator assignee template'
+    mapping = 'id name status originator assignee template_id'
     schema = SchemaDependency('flux')
     flux = MeshDependency('flux')
     platoon = MeshDependency('platoon')
@@ -96,7 +96,7 @@ class RequestController(ModelController):
 
         task = data['task']
         if task == 'initiate-request':
-            status = subject.initiate(session, subject)            
+            status = subject.initiate(session)            
             if not status:
                 subject.status = 'failed'
                 try:

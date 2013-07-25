@@ -57,7 +57,7 @@ class CreateRequest(Operation):
                     'products': Map(key=Token(nonempty=True), value=Structure({
                         'title': Text(),
                         'product': Surrogate(nonempty=True),
-                    }))
+                    }, nonempty=True)),
                 }),
             },
             'failed': {
