@@ -43,7 +43,8 @@ class Workflow(Resource):
         schema = {
             'name': Text(nonempty=True),
             'description': Text(),
-            'form': Structure(FormStructure),
+            'schema': FormStructure['schema'],
+            'layout': FormStructure['layout'],
             'operations': Sequence(Structure({
                 'description': Text(),
                 'operation': Token(segments=2, nonempty=False),

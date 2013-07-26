@@ -41,10 +41,16 @@ class WorkflowController(ModelController):
         description = data.get('description', '')
         operations = data['operations']
 
-        specification = {'name': name, 'entry': 'step:0'}
-        form = data.get('form')
-        if form:
-            specification['form'] = form
+        specification = {
+            'name': name,
+            'entry': 'step:0',
+        }
+        layout = data.get('layout')
+        schema = data.get('schema')
+        if layout:
+            specification['layout'] = layout
+        if schema:
+            specification['schema'] = schema
 
         steps = {}
         step_name = None
@@ -97,11 +103,17 @@ class WorkflowController(ModelController):
             return
 
         if 'form' in include:
-            form = model.workflow.form
-            if form:
-                resource['form'] = form.extract_dict()
-            else:
-                resource['form'] = None
+            schema = model.workflow.schema
+            layout = model.workflow.layout
+
+            form = {}
+            if layout:
+                form['layout'] = layout
+            if schema:
+                form['schema'] = schema
+
+            resource['form'] = form or None
+
         if 'specification' in include:
             resource['specification'] = model.specification
 
