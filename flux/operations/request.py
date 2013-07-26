@@ -5,6 +5,7 @@ from spire.schema import NoResultFound
 from spire.support.logs import LogHelper
 from spire.util import uniqid
 
+from flux.models.request import Request as RequestModel
 from flux.operations.operation import *
 
 __all__ = ('CreateRequest',)
@@ -69,17 +70,20 @@ class CreateRequest(Operation):
     }
 
     def complete(self, session, data):
-        Request = self.docket_entity.bind('docket.entity/1.0/flux/1.0/request')
         process_id = data['process_id']
         try:
-            subject = Request.get(data['request_id'])
+            subject = RequestModel.load(session, id=data['request_id'])
         except NoResultFound:
             return self.push(process_id, self.outcome('failed'))
+
+        products = {}
+        for key, value in subject.products.iteritems():
+            products[key] = value.extract_dict(attrs='title product')
 
         outcome = ('completed' if subject.status == 'completed' else 'failed')
         self.push(process_id, self.outcome(outcome, {
             'request': surrogate.construct('flux.surrogates.request', subject),
-            'products': subject.products,
+            'products': products,
         }))
 
     def initiate(self, session, data):
