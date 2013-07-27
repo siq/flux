@@ -31,7 +31,7 @@ class Workflow(Element):
         'name': Text(nonempty=True),
         'entry': Token(nonempty=True),
         'parameters': Map(Field(nonempty=True), Token(nonempty=True)),
-        'schema': Definition(),
+        'schema': Definition(fields='structure'),
         'layout': Layout,
         'products': Map(Product.schema, Token(nonempty=True), nonnull=True),
         'preoperation': RuleList.schema,

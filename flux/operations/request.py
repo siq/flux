@@ -1,4 +1,4 @@
-from mesh.standard import bind
+from mesh.standard import ValidationError, bind
 from scheme import *
 from scheme.surrogate import surrogate
 from spire.schema import NoResultFound
@@ -81,24 +81,29 @@ class CreateRequest(Operation):
         id = uniqid()
 
         attrs = data['input']
-        
+        try:
+            attrs = self.operation['schema'].unserialize(attrs)
+        except ValidationError:
+            log('exception', 'initiation of create-request operation failed')
+            return self.invalidation(error='invalid-input')
+
         wait_for_completion = attrs.pop('wait_for_completion', True)
-        if wait_for_completion:    
+        if wait_for_completion:
             SubscribedTask.queue_http_task('complete-request-operation',
                 self.flux.prepare('flux/1.0/request', 'task', None,
                     {'task': 'complete-request-operation', 'request_id': id,
                         'process_id': data['id']}),
                 topic='request:completed',
                 aspects={'id': id},
-                timeout=259200)  
-            
-        attrs['id'] = id          
+                timeout=259200)
+
+        attrs['id'] = id
         try:
             request = Request.create(**attrs)
         except Exception:
             log('exception', 'initiation of create-request operation failed')
             return self.invalidation(error='failed')
-        
+
         if wait_for_completion:
             return self.executing()
         else:

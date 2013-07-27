@@ -85,14 +85,15 @@ class Run(Model):
     def contribute_values(self):
         run = {'id': self.id, 'name': self.name, 'started': self.started}
         parameters = {}
-        workflow = self.workflow.workflow
 
+        workflow = self.workflow.workflow
         if workflow.parameters:
             parameters.update(workflow.parameters)
+
         if self.parameters:
             if workflow.schema:
                 parameters.update(workflow.schema.process(self.parameters,
-                    serialized=True))
+                    serialized=True, partial=True))
             else:
                 parameters.update(self.parameters)
 
@@ -100,20 +101,20 @@ class Run(Model):
         return {'run': run}
 
     @classmethod
-    def create(cls, session, workflow_id, name=None, **attrs):
+    def create(cls, session, workflow_id, name=None, parameters=None, **attrs):
         try:
             workflow = Workflow.load(session, id=workflow_id)
         except NoResultFound:
             raise OperationError('unknown-workflow')
 
         workflow_schema = workflow.workflow.schema
-        if workflow_schema and self.parameters:
-            workflow_schema.process(self.parameters, serialized=True)
+        if workflow_schema and parameters:
+            workflow_schema.process(parameters, serialized=True, partial=True)
 
         if not name:
             name = workflow.name
 
-        run = cls(name=name, workflow_id=workflow.id, **attrs)
+        run = cls(name=name, workflow_id=workflow.id, parameters=parameters, **attrs)
         session.add(run)
         return run
 
