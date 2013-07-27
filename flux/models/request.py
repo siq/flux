@@ -1,5 +1,4 @@
 from mesh.standard import OperationError, bind
-from scheme import current_timestamp
 from spire.core import Unit
 from spire.mesh import Surrogate, MeshDependency
 from spire.schema import *
@@ -29,19 +28,34 @@ class Request(Model):
     originator = Token(nullable=False)
     assignee = Token(nullable=False)
     template_id = ForeignKey('emailtemplate.id')
-    
-    attachments = relationship('RequestAttachment', cascade='all,delete-orphan', 
+
+    attachments = relationship('RequestAttachment', cascade='all,delete-orphan',
         passive_deletes=True, backref='request')
-    slots = relationship('RequestSlot', cascade='all,delete-orphan', 
+    slots = relationship('RequestSlot', cascade='all,delete-orphan',
         passive_deletes=True, backref='request',
         collection_class=attribute_mapped_collection('token'))
-    products = relationship('RequestProduct', cascade='all,delete-orphan', 
+    products = relationship('RequestProduct', cascade='all,delete-orphan',
         passive_deletes=True, backref='request',
-        collection_class=attribute_mapped_collection('token'))    
-    messages = relationship('Message', cascade='all,delete-orphan', 
+        collection_class=attribute_mapped_collection('token'))
+    messages = relationship('Message', cascade='all,delete-orphan',
         passive_deletes=True, backref='request')
     template = relationship('EmailTemplate')
-    
+
+    def initiate(self, session):
+        assignee = self._get_user(self.assignee)
+        if not assignee:
+            return False
+
+        originator = self._get_user(self.originator)
+        if not originator:
+            return False
+
+        if assignee.email:
+            self._send_init_email(session, assignee, originator)
+            return True
+        else:
+            return False
+
     @classmethod
     def create(cls, session, attachments=None, slots=None, template=None, **attrs):
         template_id = None
@@ -52,18 +66,18 @@ class Request(Model):
         if attachments:
             for attachment in attachments:
                 request.attachments.append(RequestAttachment(**attachment))
-        
+
         if slots:
             for key, value in slots.iteritems():
                 request.slots[key] = RequestSlot(token=key, **value)
-                
+
         session.add(request)
         return request
-    
+
     def update(self, session, **attrs):
         attachments = attrs.pop('attachments', None)
         if attachments:
-            self.attachments = []            
+            self.attachments = []
             for attachment in attachments:
                 self.attachments.append(RequestAttachment(**attachment))
 
@@ -87,50 +101,9 @@ class Request(Model):
         status = attrs.pop('status', None)
         if status:
             new_status = self._update_status(status)
-        
+
         self.update_with_mapping(attrs)
         return new_status
-    
-    def _update_status(self, status):
-        if self.status == status:
-            return
-        
-        if self.status == 'prepared':
-            if status == 'pending':
-                self.status = status
-                return status
-            else:
-                raise ValidationError('invalid-transition')
-        elif self.status == 'pending':
-            if status == 'completed':
-                self.status = status
-                return status
-            else:
-                raise ValidationError('invalid-transition')
-        
-    def initiate(self, session):
-        assignee = self._get_user(self.assignee)
-        if not assignee:
-            return False
-        originator = self._get_user(self.originator)
-        if not originator:
-            return False
-        
-        if assignee.email:
-            self._send_init_email(session, assignee, originator)
-            return True
-        else:
-            return False
-        
-    def _get_user(self, user_id):
-        try:
-            docket_dependency = DocketDependency()
-            DocketSubject = docket_dependency.docket_entity.bind('docket.entity/1.0/security/1.0/subject')            
-            usr = DocketSubject.get(user_id)
-            return usr
-        except Exception:
-            log('exception', 'failed to retrieve user subject with user id "%s"' % user_id)
-            return        
 
     def _convert_request_to_dict(self):
         resource = self.extract_dict(attrs='id name status originator assignee')
@@ -144,6 +117,15 @@ class Request(Model):
             slots[key] = value.extract_dict('title slot')
 
         return resource
+
+    def _get_user(self, user_id):
+        try:
+            docket_dependency = DocketDependency()
+            DocketSubject = docket_dependency.docket_entity.bind('docket.entity/1.0/security/1.0/subject')
+            usr = DocketSubject.get(user_id)
+            return usr
+        except Exception:
+            log('exception', 'failed to retrieve user subject with user id "%s"' % user_id)
 
     def _send_init_email(self, session, assignee, originator):
         template = self.template
@@ -160,7 +142,24 @@ class Request(Model):
             attrs='id domain_id name repository_id firstname lastname status email created modified last_login failure_count')
         body = template.evaluate({'request': request_dict, 'assignee': assignee_dict, 'originator': originator_dict})
         Msg.create(sender=sender, recipients=recipients, subject=email_subject, body=body) 
-        
+
+    def _update_status(self, status):
+        if self.status == status:
+            return
+
+        if self.status == 'prepared':
+            if status == 'pending':
+                self.status = status
+                return status
+            else:
+                raise ValidationError('invalid-transition')
+        elif self.status == 'pending':
+            if status == 'completed':
+                self.status = status
+                return status
+            else:
+                raise ValidationError('invalid-transition')
+
 class RequestAttachment(Model):
     """An attachment."""
 
@@ -173,7 +172,7 @@ class RequestAttachment(Model):
     token = Token()
     title = Text()
     attachment = Surrogate(nullable=False)
-    
+
 class RequestSlot(Model):
     """An slot."""
 
@@ -201,6 +200,6 @@ class RequestProduct(Model):
     token = Token(nullable=False)
     title = Text()
     product = Surrogate(nullable=False)
-    
+
 class DocketDependency(Unit):
     docket_entity = MeshDependency('docket.entity')
