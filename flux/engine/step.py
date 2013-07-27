@@ -57,6 +57,9 @@ class Step(Element):
         if preoperation:
             preoperation.evaluate(session, environment)
 
+        if params:
+            params = operation.schema.serialize(params)
+
         execution.start(params)
         session.call_after_commit(operation.initiate, id=execution.id, tag=self.name, input=params,
             timeout=self.timeout)

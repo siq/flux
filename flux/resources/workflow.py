@@ -3,17 +3,19 @@ from scheme import *
 
 __all__ = ('Workflow',)
 
+Layout = Sequence(Structure({
+    'title': Text(),
+    'elements': Sequence(Structure({
+        'type': Token(nonempty=True),
+        'field': Token(nonempty=True),
+        'label': Text(),
+        'options': Field(),
+    })),
+}))
+
 FormStructure = {
     'schema': Definition(nonempty=True),
-    'layout': Sequence(Structure({
-        'title': Text(),
-        'elements': Sequence(Structure({
-            'type': Token(nonempty=True),
-            'field': Token(nonempty=True),
-            'label': Text(),
-            'options': Field(),
-        })),
-    })),
+    'layout': Layout.clone(),
 }
 
 class Workflow(Resource):
@@ -43,7 +45,8 @@ class Workflow(Resource):
         schema = {
             'name': Text(nonempty=True),
             'description': Text(),
-            'form': Structure(FormStructure),
+            'schema': Definition(),
+            'layout': Layout.clone(),
             'operations': Sequence(Structure({
                 'description': Text(),
                 'operation': Token(segments=2, nonempty=False),

@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from scheme.fields import Structure, Text
+from scheme.fields import Integer, Structure, Text
 from mesh.exceptions import OperationError
 from mesh.testing import MeshTestCase
 from spire.core import adhoc_configure, Unit
@@ -8,7 +8,7 @@ from spire.mesh import MeshDependency
 from spire.schema import SchemaDependency
 
 from flux.bundles import API
-from flux.engine.form import Form, reverse_enumerate
+from flux.engine.workflow import Layout, Workflow as WorkflowElement, reverse_enumerate
 from flux.engine.rule import RuleList
 from flux.models import Run, Workflow
 
@@ -65,100 +65,68 @@ class BaseTestCase(MeshTestCase):
                     session.rollback()
                     continue
 
-
-class TestParamsSpecification(BaseTestCase):
-    def test_parse_valid_form(self, client):
-        """Tests verification of a valid form"""
-        specification = '\n'.join([
-            'schema:',
-            '  fieldtype: structure',
-            '  structure:',
-            '    test_field1:',
-            '      fieldtype: text',
-            '      required: true',
-            'layout:',
-            '  - title: Test Section 1',
-            '    elements:',
-            '      - type: textbox',
-            '        field: test_field1',
-            '        label: Test Field #1',
-            '        options:',
-            '          multiline: true',
-        ])
-        form = Form.unserialize(specification)
-        form.verify()
-
-    def test_empty_layout(self, client):
-        """Tests validity of an empty layout"""
-        specification = '\n'.join([
-            'schema:',
-            '  fieldtype: structure',
-            '  structure:',
-            '    test_field1:',
-            '      fieldtype: text',
-            '      required: true',
-            '    test_field2:',
-            '      fieldtype: integer',
-            '      required: true',
-        ])
-        form = Form.unserialize(specification)
-        form.verify()
+class TestLayoutSpecification(BaseTestCase):
+    def test_parse_valid_layout(self, client):
+        """Tests verification of a valid layout"""
+        schema = Structure({'test_field1': Text(required=True)})
+        layout = [{
+            'title': 'Test Section 1',
+            'elements': [{
+                'type': 'textbox',
+                'field': 'test_field1',
+                'label': 'Test Field #1',
+                'options': {'multiline': True},
+            }],
+        }]
+        WorkflowElement._verify_layout(layout, schema)
 
     def test_missing_layout_field(self, client):
         """Tests failure when provided layout is missing a field from schema"""
-        specification = '\n'.join([
-            'schema:',
-            '  fieldtype: structure',
-            '  structure:',
-            '    test_field1:',
-            '      fieldtype: text',
-            '      required: true',
-            '    test_field2:',
-            '      fieldtype: integer',
-            '      required: true',
-            'layout:',
-            '  - title: Test Section 1',
-            '    elements:',
-            '      - type: textbox',
-            '        field: test_field1',
-            '        label: Test Field #1',
-            '        options:',
-            '          multiline: true',
-        ])
-        form = Form.unserialize(specification)
+        schema = Structure({
+            'test_field1': Text(required=True),
+            'test_field2': Integer(required=True),
+        })
+        layout = [{
+            'title': 'Test Section 1',
+            'elements': [{
+                'type': 'textbox',
+                'field': 'test_field1',
+                'label': 'Test Field #1',
+                'options': {'multiline': True},
+            }],
+        }]
         with self.assertRaises(OperationError):
-            form.verify()
+            WorkflowElement._verify_layout(layout, schema)
 
     def test_missing_schema_field(self, client):
         """Tests failure when provided schema is missing a field from layout"""
-        specification = '\n'.join([
-            'schema:',
-            '  fieldtype: structure',
-            '  structure:',
-            '    test_field1:',
-            '      fieldtype: text',
-            '      required: true',
-            '    test_field2:',
-            '      fieldtype: integer',
-            '      required: true',
-            'layout:',
-            '  - title: Test Section 1',
-            '    elements:',
-            '      - type: textbox',
-            '        field: test_field1',
-            '        label: Test Field #1',
-            '        options:',
-            '          multiline: true',
-            '      - type: textbox',
-            '        field: test_field2',
-            '        label: Test Field #2',
-            '      - type: checkbox',
-            '        field: test_field3',
-            '        label: Test Field #3',
-        ])
-        form = Form.unserialize(specification)
+        schema = Structure({
+            'test_field1': Text(required=True),
+            'test_field2': Integer(required=True),
+        })
+        layout = [{
+            'title': 'Test Section 1',
+            'elements': [
+                {
+                    'type': 'textbox',
+                    'field': 'test_field1',
+                    'label': 'Test Field #1',
+                    'options': {'multiline': True},
+                },
+                {
+                    'type': 'textbox',
+                    'field': 'test_field2',
+                    'label': 'Test Field #2',
+                },
+                {
+                    'type': 'checkbox',
+                    'field': 'test_field3',
+                    'label': 'Test Field #3',
+                },
+            ],
+        }]
         with self.assertRaises(OperationError):
-            form.verify()
+            WorkflowElement._verify_layout(layout, schema)
 
 class TestSpecification(BaseTestCase):
     def test_workflow_verify_rulelist_pass(self, client):
@@ -212,21 +180,20 @@ class TestSpecification(BaseTestCase):
         name = 'valid specification workflow'
         specification = '\n'.join([
             'name: %s' % name,
-            'form:',
-            '  schema:',
-            '    fieldtype: structure',
-            '    structure:',
-            '      some_test_arg:',
-            '        fieldtype: text',
-            '        required: true',
-            '  layout:',
-            '    - title: Test Section 1',
-            '      elements:',
-            '        - type: textbox',
-            '          field: some_test_arg',
-            '          label: Test Field #1',
-            '          options:',
-            '            multiline: true',
+            'schema:',
+            '  fieldtype: structure',
+            '  structure:',
+            '    some_test_arg:',
+            '      fieldtype: text',
+            '      required: true',
+            'layout:',
+            '  - title: Test Section 1',
+            '    elements:',
+            '      - type: textbox',
+            '        field: some_test_arg',
+            '        label: Test Field #1',
+            '        options:',
+            '          multiline: true',
             'entry: step-0',
             'steps: ',
             '  step-0:',
