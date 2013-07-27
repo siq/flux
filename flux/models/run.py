@@ -83,11 +83,20 @@ class Run(Model):
         Event.create(topic='run:completed', aspects={'id': self.id})
 
     def contribute_values(self):
-        run = {'id': self.id, 'env': {}, 'name': self.name, 'started': self.started}
-        if self.workflow.workflow.parameters:
-            run['env'].update(self.workflow.workflow.parameters)
+        run = {'id': self.id, 'name': self.name, 'started': self.started}
+        parameters = {}
+        workflow = self.workflow.workflow
+
+        if workflow.parameters:
+            parameters.update(workflow.parameters)
         if self.parameters:
-            run['env'].update(self.parameters)
+            if workflow.schema:
+                parameters.update(workflow.schema.process(self.parameters,
+                    serialized=True))
+            else:
+                parameters.update(self.parameters)
+
+        run['env'] = parameters
         return {'run': run}
 
     @classmethod
@@ -96,6 +105,10 @@ class Run(Model):
             workflow = Workflow.load(session, id=workflow_id)
         except NoResultFound:
             raise OperationError('unknown-workflow')
+
+        workflow_schema = workflow.workflow.schema
+        if workflow_schema and self.parameters:
+            workflow_schema.process(self.parameters, serialized=True)
 
         if not name:
             name = workflow.name
