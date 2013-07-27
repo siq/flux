@@ -28,7 +28,7 @@ class Request(Model):
     status = Enumeration(REQUEST_STATUSES, nullable=False, default='pending')
     originator = Token(nullable=False)
     assignee = Token(nullable=False)
-    template_id = Token(nullable=False)
+    template_id = ForeignKey('emailtemplate.id')
     
     attachments = relationship('RequestAttachment', cascade='all,delete-orphan', 
         passive_deletes=True, backref='request')
@@ -40,10 +40,15 @@ class Request(Model):
         collection_class=attribute_mapped_collection('token'))    
     messages = relationship('Message', cascade='all,delete-orphan', 
         passive_deletes=True, backref='request')
+    template = relationship('EmailTemplate')
     
     @classmethod
-    def create(cls, session, attachments=None, slots=None, **attrs):
-        request = cls(**attrs)
+    def create(cls, session, attachments=None, slots=None, template=None, **attrs):
+        template_id = None
+        if template:
+            template_id = EmailTemplate.put(session, template).id
+
+        request = cls(template_id=template_id, **attrs)
         if attachments:
             for attachment in attachments:
                 request.attachments.append(RequestAttachment(**attachment))
@@ -53,7 +58,6 @@ class Request(Model):
                 request.slots[key] = RequestSlot(token=key, **value)
                 
         session.add(request)
-        
         return request
     
     def update(self, session, **attrs):
@@ -129,7 +133,7 @@ class Request(Model):
             return        
 
     def _convert_request_to_dict(self):
-        resource = self.extract_dict(attrs='id name status originator assignee template_id')
+        resource = self.extract_dict(attrs='id name status originator assignee')
 
         resource['attachments'] = attachments = []
         for attachment in self.attachments:
@@ -142,7 +146,12 @@ class Request(Model):
         return resource
 
     def _send_init_email(self, session, assignee, originator):
-        template = EmailTemplate.load(session, id=self.template_id)
+        template = self.template
+        if template:
+            template = template.template
+        else:
+            template = None # need to provide default template here
+
         sender = originator.email
         recipients = [{'to': assignee.email.split(',')}]
         email_subject = 'Request "%s" initiated' % self.name

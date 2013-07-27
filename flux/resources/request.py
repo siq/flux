@@ -31,6 +31,7 @@ class Request(Resource):
             'title': Text(),
             'product': Surrogate(nonempty=True),
         }, nonempty=True))
+        template = Text(onupdate=False, deferred=True)
 
     class create(Resource.create):
         support_returning = True
@@ -40,7 +41,6 @@ class Request(Resource):
                 'author': Token(nonempty=True),
                 'message': Text(nonempty=True),
             }),
-            'template': Text(nonempty=True),
         }
 
     class operation:

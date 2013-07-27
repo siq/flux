@@ -1,4 +1,3 @@
-from .emailtemplate import EmailTemplate
 from .execution import Execution
 from .message import Message
 from .operation import Operation

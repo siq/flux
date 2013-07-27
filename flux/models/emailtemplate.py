@@ -1,5 +1,4 @@
 from scheme.interpolation import interpolate_parameters
-from scheme.util import recursive_merge
 from spire.schema import *
 
 __all__ = ('EmailTemplate',)
@@ -10,13 +9,11 @@ class EmailTemplate(Model):
     """An email template."""
 
     class meta:
-        constraints = [UniqueConstraint('template',
-            name='email_template_unique')]
         schema = schema
         tablename = 'emailtemplate'
 
     id = Identifier()
-    template = Text(nullable=False)
+    template = Text(nullable=False, unique=True)
 
     @classmethod
     def put(cls, session, template):
@@ -30,8 +27,5 @@ class EmailTemplate(Model):
             session.rollback()
             return session.query(cls).filter(cls.template==template).one()
 
-    def evaluate(self, parameters=None):
-        params = {}
-        if parameters:
-            recursive_merge(params, parameters)
-        return interpolate_parameters(self.template, params)
+    def evaluate(self, parameters):
+        return interpolate_parameters(self.template, parameters)
