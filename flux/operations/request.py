@@ -40,6 +40,7 @@ class CreateRequest(Operation):
                 'author': Token(nonempty=True),
                 'message': Text(nonempty=True),
             }),
+            'template': Text(),
             'wait_for_completion': Boolean(default=True),
         }),
         'outcomes': {

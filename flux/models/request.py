@@ -147,10 +147,8 @@ class Request(Model):
 
     def _send_init_email(self, session, assignee, originator):
         template = self.template
-        if template:
-            template = template.template
-        else:
-            template = None # need to provide default template here
+        if not template:
+            raise Exception()
 
         sender = originator.email
         recipients = [{'to': assignee.email.split(',')}]
