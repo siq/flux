@@ -80,11 +80,17 @@ class CreateRequest(Operation):
         for key, value in subject.products.iteritems():
             products[key] = value.extract_dict(attrs='title product')
 
-        outcome = ('completed' if subject.status == 'completed' else 'failed')
-        self.push(process_id, self.outcome(outcome, {
-            'request': surrogate.construct('flux.surrogates.request', subject),
-            'products': products,
-        }))
+        values = {'request': surrogate.construct('flux.surrogates.request', subject)}
+
+        if subject.status == 'completed':
+            outcome = 'completed'
+            values['products'] = products
+        elif subject.status == 'pending':
+            outcome = 'pendings'
+        else:
+            outcome = 'failed'
+
+        self.push(process_id, self.outcome(outcome, values))
 
     def initiate(self, session, data):
         Request = self.docket_entity.bind('docket.entity/1.0/flux/1.0/request')
