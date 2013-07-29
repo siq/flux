@@ -13,6 +13,8 @@ __all__ = ('Request', 'RequestAttachment', 'RequestSlot', 'RequestProduct')
 
 schema = Schema('flux')
 log = LogHelper('flux')
+
+ExternalUrl = bind(truss, 'truss/1.0/externalurl')
 Msg = bind(truss, 'truss/1.0/message')
 
 class Request(Model):
@@ -132,10 +134,13 @@ class Request(Model):
         if not template:
             raise Exception()
 
+        url = ExternalUrl.create(path='/complete-request/%s' % self.id).url
+
         sender = originator.email
         recipients = [{'to': assignee.email.split(',')}]
         email_subject = 'Request "%s" initiated' % self.name
         request_dict = self._convert_request_to_dict()
+        request_dict['url'] = url
         assignee_dict = assignee.extract_dict(
             attrs='id domain_id name repository_id firstname lastname status email created modified last_login failure_count')
         originator_dict = originator.extract_dict(
