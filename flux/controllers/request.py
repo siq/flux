@@ -63,14 +63,15 @@ class RequestController(ModelController):
 
         task = data['task']
         if task == 'initiate-request':
-            status = subject.initiate(session)
-            if not status:
+            if not subject.initiate(session):
                 subject.status = 'failed'
+
+            session.commit()
+            if subject.status == 'failed':
                 try:
                     Event.create(topic='request:completed', aspects={'id': subject.id})
                 except Exception:
                     log('exception', 'failed to fire request:completed event')
-            session.commit()
         elif task == 'complete-request-operation':
             CreateRequest().complete(session, data)
 
