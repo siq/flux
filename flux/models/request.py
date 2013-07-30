@@ -1,3 +1,4 @@
+import scheme
 from mesh.standard import OperationError, bind
 from spire.core import Unit
 from spire.mesh import Surrogate, MeshDependency
@@ -75,6 +76,23 @@ class Request(Model):
 
         session.add(request)
         return request
+
+    def generate_form(self):
+        fields = {}
+        elements = []
+
+        for token, slot in self.slots.iteritems():
+            fields[token] = scheme.UUID(nonempty=True, source={
+                'resource': 'docket.entity/1.0/enamel/1.0/infoset',
+                'query': {'filter': {'type': 'immutable'}},
+            })
+            elements.append({
+                'field': token,
+                'label': slot.title,
+                'type': 'gridselector',
+            })
+
+        return {'schema': scheme.Structure(fields), 'layout': [{'elements': elements}]}
 
     def update(self, session, **attrs):
         attachments = attrs.pop('attachments', None)

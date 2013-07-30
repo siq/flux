@@ -32,6 +32,18 @@ class Request(Resource):
             'product': Surrogate(nonempty=True),
         }, nonempty=True))
         template = Text(onupdate=False, deferred=True)
+        form = Structure({
+            'schema': Definition(),
+            'layout': Sequence(Structure({
+                'title': Text(),
+                'elements': Sequence(Structure({
+                    'type': Token(),
+                    'field': Token(),
+                    'label': Text(),
+                    'options': Field(),
+                })),
+            })),
+        }, deferred=True, readonly=True)
 
     class create(Resource.create):
         support_returning = True

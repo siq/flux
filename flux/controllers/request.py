@@ -109,7 +109,14 @@ class RequestController(ModelController):
         for key, value in model.products.iteritems():
             products[key] = value.extract_dict('title product')
 
-        if data and 'include' in data and 'template' in data['include']:
+        include = None
+        if data and 'include' in data:
+            include = data['include']
+
+        if include and 'template' in include:
             template = model.template
             if template:
                 resource['template'] = template.template
+
+        if include and 'form' in include:
+            resource['form'] = model.generate_form()
