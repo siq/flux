@@ -85,8 +85,6 @@ class CreateRequest(Operation):
         if subject.status == 'completed':
             outcome = 'completed'
             values['products'] = products
-        elif subject.status == 'pending':
-            outcome = 'created'
         else:
             outcome = 'failed'
 
