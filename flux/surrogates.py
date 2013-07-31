@@ -6,23 +6,27 @@ from flux.constants import *
 class request(entity):
     """A scheme surrogate for requests."""
 
-    schema = entity.schema.extend({
-        'status': Enumeration(REQUEST_STATUSES, nonempty=True),
-    })
+    schemas = (
+        entity.schemas[0].extend({
+            'status': Enumeration(REQUEST_STATUSES, nonempty=True),
+        }),
+    )
 
     @classmethod
-    def contribute(cls, value):
+    def contribute(cls, value, version):
         value['entity'] = 'flux:request'
-        super(request, cls).contribute(value)
+        super(request, cls).contribute(value, version)
 
 class run(entity):
     """A scheme surrogate for workflow runs."""
 
-    schema = entity.schema.extend({
-        'status': Enumeration(RUN_STATUSES, nonempty=True),
-    })
+    schemas = (
+        entity.schemas[0].extend({
+            'status': Enumeration(RUN_STATUSES, nonempty=True),
+        }),
+    )
 
     @classmethod
-    def contribute(cls, value):
+    def contribute(cls, value, version):
         value['entity'] = 'flux:run'
-        super(run, cls).contribute(value)
+        super(run, cls).contribute(value, version)
