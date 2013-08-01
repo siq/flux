@@ -178,21 +178,35 @@ class Request(Model):
     def _send_init_email(self, session, assignee, originator):
         template = self.template
         if not template:
-            raise Exception()
+            raise Exception('invalid template')
 
-        url = ExternalUrl.create(path='/complete-request/%s' % self.id).url
+        params = {}
 
-        sender = originator.email
-        recipients = [{'to': assignee.email.split(',')}]
-        email_subject = 'Request "%s" initiated' % self.name
-        request_dict = self._convert_request_to_dict()
-        request_dict['url'] = url
-        assignee_dict = assignee.extract_dict(
-            attrs='id domain_id name repository_id firstname lastname status email created modified last_login failure_count')
-        originator_dict = originator.extract_dict(
-            attrs='id domain_id name repository_id firstname lastname status email created modified last_login failure_count')
-        body = template.evaluate({'request': request_dict, 'assignee': assignee_dict, 'originator': originator_dict})
-        Msg.create(sender=sender, recipients=recipients, subject=email_subject, body=body) 
+        # this is a horrible, horrible, horrible hack
+        enamel_concept_client = DocketDependency().enamel_concept
+        params['enamel_concept_client'] = enamel_concept_client
+
+        params['request'] = self.extract_dict(attrs='id name status originator assignee')
+        params['request']['url'] = ExternalUrl.create(path='/complete-request/%s' % self.id).url
+
+        params['originator'] = originator.extract_dict('id name firstname lastname email')
+        params['assignee'] = assignee.extract_dict('id name firstname lastname email')
+
+        params['attachments'] = attachments = {}
+        for attachment in self.attachments:
+            attachment = attachment.extract_dict('token title attachment')
+            if attachment['token'] in attachments:
+                attachments[attachment['token']].append(attachment)
+            else:
+                attachments[attachment['token']] = [attachment]
+
+        params['slots'] = slots = {}
+        for token, slot in self.slots.iteritems():
+            slots[token] = slot.extract_dict('title slot')
+
+        subject = 'New StoredIQ request from %s %s' % (originator.firstname, originator.lastname)
+        Msg.create(sender=originator.email, recipients=[{'to': [assignee.email]}],
+            subject=subject, body=template.evaluate(params))
 
     def _update_status(self, status):
         if self.status == status:
@@ -254,3 +268,4 @@ class RequestProduct(Model):
 
 class DocketDependency(Unit):
     docket_entity = MeshDependency('docket.entity')
+    enamel_concept = MeshDependency('enamel.concept')
