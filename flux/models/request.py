@@ -1,5 +1,6 @@
 import scheme
-from mesh.standard import OperationError, bind
+from mesh.standard import GoneError, OperationError, bind
+from scheme.surrogate import surrogate
 from spire.core import Unit
 from spire.mesh import Surrogate, MeshDependency
 from spire.schema import *
@@ -77,6 +78,12 @@ class Request(Model):
         session.add(request)
         return request
 
+    def generate_entities(self):
+        entities = {}
+        for token, product in self.products.iteritems():
+            entities[token] = product.product['id']
+        return entities
+
     def generate_form(self):
         fields = {}
         elements = []
@@ -94,7 +101,7 @@ class Request(Model):
 
         return {'schema': scheme.Structure(fields), 'layout': [{'elements': elements}]}
 
-    def update(self, session, **attrs):
+    def update(self, session, docket_entity, **attrs):
         attachments = attrs.pop('attachments', None)
         if attachments:
             self.attachments = []
@@ -115,7 +122,12 @@ class Request(Model):
             for key, value in products.iteritems():
                 self.products[key] = RequestProduct(token=key, **value)
 
-        # assuming message is not specified during update
+        entities = attrs.pop('entities', None)
+        if entities:
+            self.products = {}
+            session.flush()
+            for token, id in entities.iteritems():
+                self._construct_product(docket_entity, token, id)
 
         new_status = None
         status = attrs.pop('status', None)
@@ -124,6 +136,22 @@ class Request(Model):
 
         self.update_with_mapping(attrs)
         return new_status
+
+    def _construct_product(self, client, token, id):
+        try:
+            slot = self.slots[token]
+        except KeyError:
+            raise OperationError(token='invalid-slot')
+
+        try:
+            product = surrogate.acquire(slot.slot, client=client, id=id)
+        except GoneError:
+            raise OperationError(token='invalid-product')
+        except Exception:
+            log('exception', 'failed to acquire product using id %r for token %r' % (id, token))
+            raise OperationError(token='cannot-acquire-product')
+        else:
+            self.products[token] = RequestProduct(token=token, product=product)
 
     def _convert_request_to_dict(self):
         resource = self.extract_dict(attrs='id name status originator assignee')

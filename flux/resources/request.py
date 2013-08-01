@@ -44,6 +44,8 @@ class Request(Resource):
                 })),
             })),
         }, deferred=True, readonly=True)
+        entities = Map(key=Token(nonempty=True), value=Token(nonempty=True),
+            nonnull=True, oncreate=False, deferred=True)
 
     class create(Resource.create):
         support_returning = True

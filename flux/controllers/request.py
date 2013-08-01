@@ -18,8 +18,9 @@ class RequestController(ModelController):
 
     model = Request
     mapping = 'id name status originator assignee'
-
     schema = SchemaDependency('flux')
+
+    docket_entity = MeshDependency('docket.entity')
     flux = MeshDependency('flux')
     platoon = MeshDependency('platoon')
 
@@ -81,7 +82,7 @@ class RequestController(ModelController):
             return subject
 
         session = self.schema.session
-        new_status = subject.update(session, **data)
+        new_status = subject.update(session, self.docket_entity, **data)
         session.commit()
 
         if new_status == 'pending':
@@ -120,3 +121,6 @@ class RequestController(ModelController):
 
         if include and 'form' in include:
             resource['form'] = model.generate_form()
+
+        if include and 'entities' in include:
+            resource['entities'] = model.generate_entities()
