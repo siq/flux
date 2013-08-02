@@ -8,9 +8,9 @@ uwsgi:
   module: spire.runtime.uwsgi
   need-app: true
   pidfile: ${VARPATH}/flux.pid
-  processes: 4
+  processes: 3
   procname-prefix-spaced: "[flux]"
-  threads: 10
+  threads: 6
   touch-logreopen: ${VARPATH}/flux.logreopen
   uid: uwsgi
   vacuum: true
