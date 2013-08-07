@@ -52,6 +52,7 @@ class Workflow(Model):
     @classmethod
     def create(cls, session, **attrs):
         subject = cls(modified=current_timestamp(), **attrs)
+        subject.validate_specification()
         session.add(subject)
         return subject
 
@@ -59,7 +60,8 @@ class Workflow(Model):
         changed = False
         if 'name' in attrs and attrs['name'] != self.name:
             changed = True
-        elif 'specfication' in attrs and attrs['specification'] != self.specification:
+        elif 'specification' in attrs and attrs['specification'] != self.specification:
+            self.validate_specification()
             changed = True
 
         self.update_with_mapping(attrs, ignore='id')
@@ -67,13 +69,13 @@ class Workflow(Model):
 
         return changed
 
-    @validates('specification')
-    def validate_specification(self, name, value):
+    def validate_specification(self):
+        specification = self.specification
         try:
-            self._verify_specification(value)
+            self._verify_specification(specification)
         except SchemeError as error:
-            raise OperationError(structure={name: error})
-        return value
+            raise OperationError(structure={'specification': error})
+        return specification
 
     @classmethod
     def _verify_specification(cls, specification):
