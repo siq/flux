@@ -80,7 +80,6 @@ class Run(Model):
 
     def complete(self, session):
         self._end_run(session, 'completed')
-        Event.create(topic='run:completed', aspects={'id': self.id})
 
     def contribute_values(self):
         run = {'id': self.id, 'name': self.name, 'started': self.started}
@@ -160,8 +159,11 @@ class Run(Model):
     def _end_run(self, session, status):
         self.status = status
         self.ended = current_timestamp()
+        session.call_after_commit(self._run_changed_event, 'run:changed')
+        session.call_after_commit(self._run_changed_event, 'run:ended')
 
+    def _run_changed_event(self, topic):
         try:
-            Event.create(topic='run:changed', aspects={'id': self.id})
+            Event.create(topic=topic, aspects={'id': self.id})
         except Exception:
-            log('exception', 'failed to fire run:changed event')
+            log('exception', 'failed to fire %s event', topic)
