@@ -37,7 +37,7 @@ class RunController(ModelController):
                     'flux/1.0/run', 'task', None,
                     {'task': 'run-completion', 'id': subject.id, 'notify': notify}
                 ),
-                topic='run:completed', aspects={'id': subject.id})
+                topic='run:ended', aspects={'id': subject.id})
 
         if subject.status == 'pending':
             ScheduledTask.queue_http_task('initiate-run',
@@ -86,7 +86,8 @@ class RunController(ModelController):
             subject.abort_executions(session)
             session.commit()
         elif task == 'run-completion':
-            self._send_completion_email(subject, data)
+            if subject.status == 'completed':
+                self._send_completion_email(subject, data)
 
     def _annotate_query(self, request, query, data):
         return query.options(joinedload(Run.products))
