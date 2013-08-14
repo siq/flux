@@ -70,5 +70,5 @@ class Workflow(Element):
         for i, element in reverse_enumerate(elements[:], len(elements) - 1):
             if fields.pop(element['field'], False):
                 elements.pop(i)
-        if elements or fields:
+        if elements:
             raise OperationError(token='unknown-layout-elements')
