@@ -27,7 +27,7 @@ class Request(Model):
         tablename = 'request'
 
     id = Identifier()
-    name = Text(nullable=False, unique=True)
+    name = Text(nullable=False)
     status = Enumeration(REQUEST_STATUSES, nullable=False, default='pending')
     originator = Token(nullable=False)
     assignee = Token(nullable=False)
