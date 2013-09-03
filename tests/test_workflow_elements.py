@@ -80,24 +80,6 @@ class TestLayoutSpecification(BaseTestCase):
         }]
         WorkflowElement._verify_layout(layout, schema)
 
-    def test_missing_layout_field(self, client):
-        """Tests failure when provided layout is missing a field from schema"""
-        schema = Structure({
-            'test_field1': Text(required=True),
-            'test_field2': Integer(required=True),
-        })
-        layout = [{
-            'title': 'Test Section 1',
-            'elements': [{
-                'type': 'textbox',
-                'field': 'test_field1',
-                'label': 'Test Field #1',
-                'options': {'multiline': True},
-            }],
-        }]
-        with self.assertRaises(OperationError):
-            WorkflowElement._verify_layout(layout, schema)
-
     def test_missing_schema_field(self, client):
         """Tests failure when provided schema is missing a field from layout"""
         schema = Structure({
