@@ -19,6 +19,9 @@ ENTITY_REGISTRATIONS = [
         name='workflow',
         title='Workflow',
         specification=API.describe(['workflow']),
+        cached_attributes={
+            'is_service': {'type': 'boolean'},
+        },
     ),
     Registration(
         id='flux:run',
