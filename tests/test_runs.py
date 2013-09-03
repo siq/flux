@@ -116,7 +116,7 @@ class TestSimpleRunCases(BaseTestCase):
         run_id = resp2.content['id']
 
         limit = 15
-        wait = 10
+        wait = 20
         while limit:
             sleep(wait)
             resp = client.execute('run', 'get', run_id)
@@ -140,7 +140,7 @@ class TestSimpleRunCases(BaseTestCase):
             self.assertEquals(expected, result)
             break
         else:
-            raise Exception('run not completing')
+            raise Exception('Run \'%s\' not completing' % run_id)
 
     def test_run_workflow2(self, client):
         """Tests simple workflow run and execution cycle"""
@@ -154,7 +154,7 @@ class TestSimpleRunCases(BaseTestCase):
         run_id = resp2.content['id']
 
         limit = 15
-        wait = 10
+        wait = 20
         while limit:
             sleep(wait)
             resp = client.execute('run', 'get', run_id, {'include': ['executions']})
@@ -197,7 +197,7 @@ class TestSimpleRunCases(BaseTestCase):
             self.assertEquals(expected, result)
             break
         else:
-            raise Exception('run not completing')
+            raise Exception('Run \'%s\' not completing' % run_id)
 
     def test_multi_step_run(self, client):
         """Tests for multistep workflow runs"""
@@ -590,7 +590,7 @@ class TestRunOutcomeCases(BaseTestCase):
             self.assertEquals(expected, result)
             break
         else:
-            raise Exception('run not completing')
+            raise Exception('Run \'%s\' not completing' % run_id)
 
     def test_abort_execution(self, client):
         '''Test setting execution status to aborted'''
@@ -667,7 +667,7 @@ class TestRunOutcomeCases(BaseTestCase):
             self.assertEquals(expected, result)
             break
         else:
-            raise Exception('run not completing')
+            raise Exception('Run \'%s\' not completing' % run_id)
 
     def test_success_outcome_with_concurrent_executions(self, client):
         '''Test success run outcome with active concurrent executions'''
@@ -768,7 +768,7 @@ class TestIgnoreStatusRuns(BaseTestCase):
             self.assertEquals(result, expected)
             break
         else:
-            raise Exception('run not completing')
+            raise Exception('Run \'%s\' not completing' % run_id)
 
     def test_ignore_failure(self, client):
         """Test use of ignore failure of failed step."""
@@ -804,8 +804,8 @@ class TestIgnoreStatusRuns(BaseTestCase):
         self.assertEquals('OK', resp.status)
         run_id = resp.content['id']
 
-        wait = 10
-        limit = 10
+        wait = 20
+        limit = 15
         for i in range(10):
             sleep(wait)
 
@@ -857,7 +857,7 @@ class TestIgnoreStatusRuns(BaseTestCase):
             self.assertEquals(result, expected)
             break
         else:
-            raise Exception('run not completing')
+            raise Exception('Run \'%s\' not completing' % run_id)
 
     def test_ignore_failure_incorrect_use(self, client):
         """Test failure with ignore step with incorrect use case."""
@@ -893,8 +893,8 @@ class TestIgnoreStatusRuns(BaseTestCase):
         self.assertEquals('OK', resp.status)
         run_id = resp.content['id']
 
-        wait = 10
-        limit = 10
+        wait = 20
+        limit = 15
         for i in range(10):
             sleep(wait)
 
@@ -938,7 +938,7 @@ class TestIgnoreStatusRuns(BaseTestCase):
             self.assertEquals(result, expected)
             break
         else:
-            raise Exception('run not completing')
+            raise Exception('Run \'%s\' not completing' % run_id)
 
 class TestRunTimedoutCases(BaseTestCase):
     """Test run cases involving the timedout status."""
@@ -976,8 +976,8 @@ class TestRunTimedoutCases(BaseTestCase):
         self.assertEquals('OK', resp.status)
         run_id = resp.content['id']
 
-        wait = 10
-        limit = 10
+        wait = 20
+        limit = 15
         for i in range(10):
             sleep(wait)
 
@@ -1023,7 +1023,7 @@ class TestRunTimedoutCases(BaseTestCase):
             self.assertEquals(result, expected)
             break
         else:
-            raise Exception('run not completing')
+            raise Exception('Run \'%s\' not completing' % run_id)
 
     def test_ignore_timedout_case(self, client):
         """Test ignore-failure on timedout step."""
@@ -1060,8 +1060,8 @@ class TestRunTimedoutCases(BaseTestCase):
         self.assertEquals('OK', resp.status)
         run_id = resp.content['id']
 
-        wait = 10
-        limit = 10
+        wait = 20
+        limit = 15
         for i in range(10):
             sleep(wait)
 
@@ -1113,7 +1113,7 @@ class TestRunTimedoutCases(BaseTestCase):
             self.assertEquals(result, expected)
             break
         else:
-            raise Exception('run not completing')
+            raise Exception('Run \'%s\' not completing' % run_id)
 
 class TestInvalidRunCase(BaseTestCase):
     """Test run cases involving invalidated status."""
@@ -1150,8 +1150,8 @@ class TestInvalidRunCase(BaseTestCase):
         self.assertEquals('OK', resp.status)
         run_id = resp.content['id']
 
-        wait = 10
-        limit = 10
+        wait = 20
+        limit = 15
         for i in range(10):
             sleep(wait)
 
@@ -1197,7 +1197,7 @@ class TestInvalidRunCase(BaseTestCase):
             self.assertEquals(result, expected)
             break
         else:
-            raise Exception('run not completing')
+            raise Exception('Run \'%s\' not completing' % run_id)
 
     def test_ignore_invalidated_case(self, client):
         name = u'test ignore invalidated run'
@@ -1232,8 +1232,8 @@ class TestInvalidRunCase(BaseTestCase):
         self.assertEquals('OK', resp.status)
         run_id = resp.content['id']
 
-        wait = 10
-        limit = 10
+        wait = 20
+        limit = 15
         for i in range(10):
             sleep(wait)
 
@@ -1279,5 +1279,5 @@ class TestInvalidRunCase(BaseTestCase):
             self.assertEquals(result, expected)
             break
         else:
-            raise Exception('run not completing')
+            raise Exception('Run \'%s\' not completing' % run_id)
 
