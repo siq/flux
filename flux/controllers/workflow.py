@@ -17,7 +17,7 @@ class WorkflowController(ModelController):
     version = (1, 0)
 
     model = Workflow
-    mapping = 'id name designation specification modified'
+    mapping = 'id name designation is_service specification modified'
     schema = SchemaDependency('flux')
 
     @support_returning

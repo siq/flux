@@ -29,6 +29,7 @@ class Workflow(Resource):
         id = UUID(nonnull=True, oncreate=True, operators='equal')
         name = Text(nonempty=True, operators='equal icontains')
         designation = Token(operators='equal')
+        is_service = Boolean(default=False, operators='equal')
         specification = Text(deferred=True)
         form = Structure(FormStructure, deferred=True, readonly=True)
         modified = DateTime(utc=True, readonly=True)

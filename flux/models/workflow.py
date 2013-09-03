@@ -40,6 +40,7 @@ class Workflow(Model):
     id = Identifier()
     name = Text(unique=True, nullable=False)
     designation = Token(unique=True)
+    is_service = Boolean(default=False)
     specification = Text(nullable=False)
     modified = DateTime(timezone=True)
 
