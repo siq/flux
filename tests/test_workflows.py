@@ -95,6 +95,7 @@ class TestWorkflow(BaseTestCase):
             'name': u'test create workflow',
             'designation': None,
             'specification': unicode(self._workflow_spec),
+            'is_service': False,
         }
 
         resp = client.execute(
@@ -126,6 +127,7 @@ class TestWorkflow(BaseTestCase):
             'name': u'test workflow empty form',
             'form': None,
             'designation': None,
+            'is_service': False,
             'specification': unicode(self._workflow_spec),
         }
 
@@ -195,6 +197,7 @@ class TestWorkflow(BaseTestCase):
                 ],
             },
             'designation': None,
+            'is_service': False,
             'specification': unicode(self._workflow_spec),
         }
 
