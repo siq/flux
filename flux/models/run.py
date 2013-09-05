@@ -1,4 +1,4 @@
-from mesh.standard import OperationError, bind
+from mesh.standard import bind, OperationError, ValidationError
 from scheme import current_timestamp
 from spire.mesh import Surrogate
 from spire.schema import *
@@ -110,7 +110,10 @@ class Run(Model):
         if workflow_schema and parameters:
             workflow_schema.process(parameters, serialized=True, partial=True)
 
-        if not name:
+        if name:
+            if session.query(cls).filter_by(name=name).count():
+                raise OperationError(token='duplicate-run-name')
+        else:
             name = workflow.name
 
         run = cls(name=name, workflow_id=workflow.id, parameters=parameters, **attrs)
@@ -155,6 +158,27 @@ class Run(Model):
     def timeout(self, session):
         self._end_run(session, 'timedout')
         self.abort_executions(session)
+
+    def update(self, session, **attrs):
+        task = None
+        name = attrs.get('name')
+        if name and name != self.name:
+            if session.query(Run).filter_by(name=name).count():
+                raise OperationError(token='duplicate-run-name')
+
+        status = attrs.get('status')
+        if status:
+            if status == 'pending':
+                if self.status != 'prepared':
+                    raise ValidationError('invalid-transition')
+                task = 'initiate'
+            elif status == 'aborted':
+                if not self.is_active:
+                    raise ValidationError('invalid-transition')
+                task = 'abort'
+
+        self.update_with_mapping(attrs, ignore='id')
+        return task
 
     def _end_run(self, session, status):
         self.status = status
