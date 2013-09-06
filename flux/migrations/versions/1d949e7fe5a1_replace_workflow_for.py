@@ -9,14 +9,17 @@ revision = '1d949e7fe5a1'
 down_revision = '9ba67b798fa'
 
 from alembic import op
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import text
 
 from scheme.formats import Yaml
 from flux.models import Workflow
 
 def upgrade():
-    session = sessionmaker(bind=op.get_bind())()
-    for workflow in session.query(Workflow).all():
+    connection = op.get_bind()
+    fetch_workflows = text("select * from workflow")
+    update_workflows = text("update workflow set specification = :spec where id = :id")
+
+    for workflow in connection.execute(fetch_workflows):
         if not workflow.specification:
             continue
         specification = Yaml.unserialize(workflow.specification)
@@ -30,9 +33,8 @@ def upgrade():
         if 'layout' in form:
             specification['layout'] = form['layout']
 
-        workflow.specification = Yaml.serialize(specification)
-
-    session.commit()
+        specification = Yaml.serialize(specification)
+        connection.execute(update_workflows, spec=specification, id=workflow.id)
 
 def downgrade():
     pass

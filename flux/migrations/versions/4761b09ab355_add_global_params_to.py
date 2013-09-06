@@ -8,10 +8,10 @@ Created: 2013-04-29 17:18:26.906029
 revision = '4761b09ab355'
 down_revision = '30d13bcaabd6'
 
-import yaml
+from scheme.formats import Yaml
 from alembic import op
-from sqlalchemy.orm import sessionmaker
 from flux.models import Workflow
+from sqlalchemy import text
 
 FormDict = {
     'schema': {
@@ -76,19 +76,19 @@ FormDict = {
 }
 
 def upgrade():
-    Session = sessionmaker(bind=op.get_bind())
-    session = Session()
-    workflows = session.query(Workflow).all()
-    for wf in workflows:
+    connection = op.get_bind()
+    fetch_workflows = text("select * from workflow")
+    update_workflows = text("update workflow set specification = :spec where id = :id")
+    for wf in connection.execute(fetch_workflows):
         try:
             Workflow._verify_specification(wf.specification)
         except Exception, e:
             continue #dont modify invalid workflows
-        yaml_dict = yaml.load(wf.specification)
+        yaml_dict = Yaml.unserialize(wf.specification)
         if not(yaml_dict.get('form')):
             yaml_dict['form'] = FormDict
-            wf.specification = yaml.dump(yaml_dict)
-    session.commit()
+            specification = Yaml.serialize(yaml_dict)
+            connection.execute(update_workflows, spec=specification, id=wf.id)
 
 def downgrade():
     pass
