@@ -9,56 +9,38 @@ revision = '384bb0af702c'
 down_revision = '2b783cf338a3'
 
 from alembic import op
-from spire.schema.fields import *
-from sqlalchemy import (Column, ForeignKey, ForeignKeyConstraint, PrimaryKeyConstraint,
-    CheckConstraint, UniqueConstraint)
-from sqlalchemy.dialects import postgresql
+from sqlalchemy import text
+
+from scheme.formats import Yaml
+
+def _has_operation(steps, operation):
+    for step in steps.itervalues():
+        if step['operation'] == operation:
+            return True
+    return False
 
 def upgrade():
-    op.execute("delete from execution where run_id in "
-               "(select id from run where workflow_id in "
-               "(select id from workflow where (id, name) not in ("
-               "('c9741c48-6125-4fbf-a771-0e4107ddc27e','create-identification-box'),"
-               "('050bf831-4087-4f04-b657-1038d3daca98','create-artifact'),"
-               "('5f02c8bd-6e78-49c0-8bdf-468898a919ea','create-collection-box'),"
-               "('833919a0-fb4d-44d7-b40f-103ab5a37f82','create-export-box'),"
-               "('db82cdc6-e832-4b12-910a-47eb13da6e90','refine-box'),"
-               "('d4e08a73-77e1-48ae-8e81-79d464d380e6','restart-box'),"
-               "('b1a784c0-1399-4592-959f-92150116a6f9','clone-box'),"
-               "('784f6525-b83a-4789-ae09-7c0808d9ca33','delete-box'))))")
+    connection = op.get_bind()
+    fetch_workflows = text("select * from workflow")
+    delete_executions = text(
+        "delete from execution where run_id in (select id from run where workflow_id = :id)")
+    delete_products = text(
+        "delete from product where run_id in (select id from run where workflow_id = :id)")
+    delete_runs = text(
+        "delete from run where workflow_id in (select id from workflow where id = :id)")
+    delete_workflow = text("delete from workflow where id = :id")
 
-    op.execute("delete from product where run_id in "
-               "(select id from run where workflow_id in "
-               "(select id from workflow where (id, name) not in ("
-               "('c9741c48-6125-4fbf-a771-0e4107ddc27e','create-identification-box'),"
-               "('050bf831-4087-4f04-b657-1038d3daca98','create-artifact'),"
-               "('5f02c8bd-6e78-49c0-8bdf-468898a919ea','create-collection-box'),"
-               "('833919a0-fb4d-44d7-b40f-103ab5a37f82','create-export-box'),"
-               "('db82cdc6-e832-4b12-910a-47eb13da6e90','refine-box'),"
-               "('d4e08a73-77e1-48ae-8e81-79d464d380e6','restart-box'),"
-               "('b1a784c0-1399-4592-959f-92150116a6f9','clone-box'),"
-               "('784f6525-b83a-4789-ae09-7c0808d9ca33','delete-box'))))")
-
-    op.execute("delete from run where workflow_id in "
-               "(select id from workflow where (id, name) not in ("
-               "('c9741c48-6125-4fbf-a771-0e4107ddc27e','create-identification-box'),"
-               "('050bf831-4087-4f04-b657-1038d3daca98','create-artifact'),"
-               "('5f02c8bd-6e78-49c0-8bdf-468898a919ea','create-collection-box'),"
-               "('833919a0-fb4d-44d7-b40f-103ab5a37f82','create-export-box'),"
-               "('db82cdc6-e832-4b12-910a-47eb13da6e90','refine-box'),"
-               "('d4e08a73-77e1-48ae-8e81-79d464d380e6','restart-box'),"
-               "('b1a784c0-1399-4592-959f-92150116a6f9','clone-box'),"
-               "('784f6525-b83a-4789-ae09-7c0808d9ca33','delete-box')))")
-
-    op.execute("delete from workflow where (id, name) not in ("
-               "('c9741c48-6125-4fbf-a771-0e4107ddc27e','create-identification-box'),"
-               "('050bf831-4087-4f04-b657-1038d3daca98','create-artifact'),"
-               "('5f02c8bd-6e78-49c0-8bdf-468898a919ea','create-collection-box'),"
-               "('833919a0-fb4d-44d7-b40f-103ab5a37f82','create-export-box'),"
-               "('db82cdc6-e832-4b12-910a-47eb13da6e90','refine-box'),"
-               "('d4e08a73-77e1-48ae-8e81-79d464d380e6','restart-box'),"
-               "('b1a784c0-1399-4592-959f-92150116a6f9','clone-box'),"
-               "('784f6525-b83a-4789-ae09-7c0808d9ca33','delete-box'))")
+    for wf in connection.execute(fetch_workflows):
+        yaml = Yaml.unserialize(wf.specification)
+        schema = yaml.get('schema')
+        steps = yaml.get('steps')
+        if wf.is_service or not (schema and steps):
+            continue
+        if _has_operation(steps, 'create-infoset') and 'document_id' not in schema:
+            connection.execute(delete_executions, id=wf.id)
+            connection.execute(delete_products, id=wf.id)
+            connection.execute(delete_runs, id=wf.id)
+            connection.execute(delete_workflow, id=wf.id)
 
 def downgrade():
     pass
