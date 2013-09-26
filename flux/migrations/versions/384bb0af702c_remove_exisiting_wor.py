@@ -36,7 +36,8 @@ def upgrade():
         steps = yaml.get('steps')
         if wf.is_service or not (schema and steps):
             continue
-        if _has_operation(steps, 'create-infoset') and 'document_id' not in schema:
+        if (_has_operation(steps, 'enamel:create-infoset') and
+                'document_id' not in schema['structure']):
             connection.execute(delete_executions, id=wf.id)
             connection.execute(delete_products, id=wf.id)
             connection.execute(delete_runs, id=wf.id)
