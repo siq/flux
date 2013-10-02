@@ -5,6 +5,7 @@ __all__ = ('Workflow',)
 
 Layout = Sequence(Structure({
     'title': Text(),
+    'view': Token(),
     'elements': Sequence(Structure({
         'type': Token(nonempty=True),
         'field': Token(nonempty=True),
