@@ -66,7 +66,11 @@ class Workflow(Element):
     @classmethod
     def _verify_layout(cls, layout, schema):
         fields = schema.clone().structure
-        elements = reduce(lambda x, y: x + y, [l['elements'] for l in layout])
+        elements = []
+        for item in layout:
+            element = item.get('elements')
+            if element:
+                elements += element
 
         for i, element in reverse_enumerate(elements[:], len(elements) - 1):
             if fields.pop(element['field'], False):
