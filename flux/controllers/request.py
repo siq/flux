@@ -73,6 +73,9 @@ class RequestController(ModelController):
                     Event.create(topic='request:completed', aspects={'id': subject.id})
                 except Exception:
                     log('exception', 'failed to fire request:completed event')
+        elif task == 'reject-request':
+            subject.reject(session)
+            session.commit()
         elif task == 'complete-request-operation':
             CreateRequest().complete(session, data)
 
@@ -90,6 +93,14 @@ class RequestController(ModelController):
                 self.flux.prepare('flux/1.0/request', 'task', None,
                 {'task': 'initiate-request', 'id': subject.id}))
         elif new_status == 'completed':
+            try:
+                Event.create(topic='request:completed', aspects={'id': subject.id})
+            except Exception:
+                log('exception', 'failed to fire request:completed event')
+        elif new_status in ('canceled', 'declined'):
+            ScheduledTask.queue_http_task('reject-request',
+                self.flux.prepare('flux/1.0/request', 'task', None,
+                {'task': 'reject-request', 'id': subject.id}))
             try:
                 Event.create(topic='request:completed', aspects={'id': subject.id})
             except Exception:

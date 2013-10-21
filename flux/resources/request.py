@@ -89,6 +89,9 @@ class Request(Resource):
                     'process_id': UUID(nonempty=True), 
                     'request_id': UUID(nonempty=True),
                 },
+                'reject-request': {
+                    'id': UUID(nonempty=True),
+                },
             },
             nonempty=True,
             polymorphic_on='task')

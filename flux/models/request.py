@@ -101,6 +101,18 @@ class Request(Model):
 
         return {'schema': scheme.Structure(fields), 'layout': [{'elements': elements}]}
 
+    def reject(self, session):
+        assignee = self._get_user(self.assignee)
+        if not assignee:
+            return
+
+        originator = self._get_user(self.originator)
+        if not originator:
+            return
+
+        if originator.email:
+            self._send_reject_email(session, assignee, originator)
+
     def update(self, session, docket_entity, **attrs):
         attachments = attrs.pop('attachments', None)
         if attachments:
@@ -207,6 +219,21 @@ class Request(Model):
         subject = 'New StoredIQ request from %s %s' % (originator.firstname, originator.lastname)
         Msg.create(sender=originator.email, recipients=[{'to': [assignee.email]}],
             subject=subject, body=template.evaluate(params))
+
+    def _send_reject_email(self, session, assignee, originator):
+        if self.status == 'canceled':
+            subject = 'StoredIQ request to %s %s is canceled'
+            body = 'The request "%s" assigned to %s %s has been canceled.'
+        elif self.status == 'declined':
+            subject = 'StoredIQ request to %s %s is declined'
+            body = 'The request "%s" assigned to %s %s has been declined.'
+        else:
+            raise Exception('invalid status for rejection email: %s', self.status)
+
+        subject = subject % (assignee.firstname, assignee.lastname)
+        body = body % (self.name, assignee.firstname, assignee.lastname)
+        Msg.create(sender=assignee.email, recipients=[{'to': [originator.email]}],
+            subject=subject, body=body)
 
     def _update_status(self, status):
         if self.status == status:
