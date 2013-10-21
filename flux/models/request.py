@@ -219,7 +219,7 @@ class Request(Model):
             else:
                 raise ValidationError('invalid-transition')
         elif self.status == 'pending':
-            if status == 'completed':
+            if status in ('completed', 'canceled', 'declined'):
                 self.status = status
                 return status
             else:
