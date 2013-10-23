@@ -89,7 +89,10 @@ class Request(Resource):
                     'process_id': UUID(nonempty=True), 
                     'request_id': UUID(nonempty=True),
                 },
-                'reject-request': {
+                'cancel-request': {
+                    'id': UUID(nonempty=True),
+                },
+                'decline-request': {
                     'id': UUID(nonempty=True),
                 },
             },

@@ -101,7 +101,7 @@ class Request(Model):
 
         return {'schema': scheme.Structure(fields), 'layout': [{'elements': elements}]}
 
-    def reject(self, session):
+    def decline(self, session):
         assignee = self._get_user(self.assignee)
         if not assignee:
             return
@@ -111,7 +111,19 @@ class Request(Model):
             return
 
         if originator.email:
-            self._send_reject_email(session, assignee, originator)
+            self._send_decline_email(assignee, originator)
+
+    def cancel(self, session):
+        assignee = self._get_user(self.assignee)
+        if not assignee:
+            return
+
+        originator = self._get_user(self.originator)
+        if not originator:
+            return
+
+        if assignee.email:
+            self._send_cancel_email(assignee, originator)
 
     def update(self, session, docket_entity, **attrs):
         attachments = attrs.pop('attachments', None)
@@ -220,18 +232,19 @@ class Request(Model):
         Msg.create(sender=originator.email, recipients=[{'to': [assignee.email]}],
             subject=subject, body=template.evaluate(params))
 
-    def _send_reject_email(self, session, assignee, originator):
-        if self.status == 'canceled':
-            subject = 'StoredIQ request to %s %s is canceled'
-            body = 'The request "%s" assigned to %s %s has been canceled.'
-        elif self.status == 'declined':
-            subject = 'StoredIQ request to %s %s is declined'
-            body = 'The request "%s" assigned to %s %s has been declined.'
-        else:
-            raise Exception('invalid status for rejection email: %s', self.status)
+    def _send_cancel_email(self, assignee, originator):
+        subject = 'StoredIQ request from %s %s is canceled' % (originator.firstname,
+            originator.lastname)
+        body = 'The request "%s" originated from %s %s has been canceled.' % (self.name,
+            originator.firstname, originator.lastname)
+        Msg.create(sender=assignee.email, recipients=[{'to': [assignee.email]}],
+            subject=subject, body=body)
 
-        subject = subject % (assignee.firstname, assignee.lastname)
-        body = body % (self.name, assignee.firstname, assignee.lastname)
+    def _send_decline_email(self, assignee, originator):
+        subject = 'StoredIQ request to %s %s is declined' % (assignee.firstname,
+            assignee.lastname)
+        body = 'The request "%s" assigned to %s %s has been declined.' % (self.name,
+            assignee.firstname, assignee.lastname)
         Msg.create(sender=assignee.email, recipients=[{'to': [originator.email]}],
             subject=subject, body=body)
 
