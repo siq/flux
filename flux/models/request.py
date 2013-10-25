@@ -91,7 +91,6 @@ class Request(Model):
         for token, slot in self.slots.iteritems():
             fields[token] = scheme.UUID(nonempty=True, source={
                 'resource': 'docket.entity/1.0/enamel/1.0/infoset',
-                'query': {'filter': {'type': 'immutable'}},
             })
             elements.append({
                 'field': token,
