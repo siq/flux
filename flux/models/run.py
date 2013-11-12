@@ -173,9 +173,10 @@ class Run(Model):
                     raise ValidationError('invalid-transition')
                 task = 'initiate'
             elif status == 'aborted':
-                if not self.is_active:
+                if self.is_active:
+                    task = 'abort'
+                elif self.status != 'aborted':
                     raise ValidationError('invalid-transition')
-                task = 'abort'
 
         self.update_with_mapping(attrs, ignore='id')
         return task
