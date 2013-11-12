@@ -83,6 +83,9 @@ class WorkflowExecution(Model):
         self.status = 'invalidated'
 
     def process(self, session, status, output):
+        if not self.is_active:
+            return
+
         workflow = self.workflow.workflow
         step = workflow.steps[self.step]
 
