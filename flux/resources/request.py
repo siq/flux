@@ -30,7 +30,7 @@ class Request(Resource):
         products = Map(key=Token(nonempty=True), value=Structure({
             'title': Text(),
             'product': Surrogate(nonempty=True),
-        }, nonempty=True))
+        }, nonempty=True), readonly=True)
         template = Text(onupdate=False, deferred=True)
         form = Structure({
             'schema': Definition(),

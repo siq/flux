@@ -174,7 +174,7 @@ class Request(Model):
             log('exception', 'failed to acquire product using id %r for token %r' % (id, token))
             raise OperationError(token='cannot-acquire-product')
         else:
-            self.products[token] = RequestProduct(token=token, product=product)
+            self.products[token] = RequestProduct(title=slot.title, token=token, product=product)
 
     def _convert_request_to_dict(self):
         resource = self.extract_dict(attrs='id name status originator assignee')
