@@ -44,7 +44,7 @@ class Request(Resource):
                 })),
             })),
         }, deferred=True, readonly=True)
-        entities = Map(key=Token(nonempty=True), value=Token(nonempty=True),
+        entities = Map(key=Token(nonempty=True), value=Text(nonempty=True),
             nonnull=True, oncreate=False, deferred=True)
 
     class create(Resource.create):

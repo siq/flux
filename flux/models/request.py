@@ -19,6 +19,11 @@ log = LogHelper('flux')
 ExternalUrl = bind(truss, 'truss/1.0/externalurl')
 Msg = bind(truss, 'truss/1.0/message')
 
+SlotTypes = {
+    'text': (scheme.Text, {'type': 'textbox'}),
+    'textarea': (scheme.Text, {'type': 'textbox', 'multiline': True}),
+}
+
 class Request(Model):
     """An request."""
 
@@ -89,14 +94,21 @@ class Request(Model):
         elements = []
 
         for token, slot in self.slots.iteritems():
-            fields[token] = scheme.UUID(nonempty=True, source={
-                'resource': 'docket.entity/1.0/enamel/1.0/infoset',
-            })
-            elements.append({
-                'field': token,
-                'label': slot.title,
-                'type': 'gridselector',
-            })
+            field = SlotTypes.get(slot.slot)
+            if field:
+                fields[token] = field[0]()
+                element = {'label': slot.title, 'field': token}
+                element.update(field[1])
+                elements.append(element)
+            else:
+                fields[token] = scheme.UUID(nonempty=True, source={
+                    'resource': 'docket.entity/1.0/enamel/1.0/infoset',
+                })
+                elements.append({
+                    'field': token,
+                    'label': slot.title,
+                    'type': 'gridselector',
+                })
 
         return {'schema': scheme.Structure(fields), 'layout': [{'elements': elements}]}
 
@@ -166,6 +178,15 @@ class Request(Model):
         except KeyError:
             raise OperationError(token='invalid-slot')
 
+        field = SlotTypes.get(slot.slot)
+        if field:
+            self.products[token] = RequestProduct(
+                title=slot.title, token=token,
+                product=surrogate.construct(
+                    schema=scheme.Structure({'value': field[0](name=token)}),
+                    value={'value': id}))
+
+            return
         try:
             product = surrogate.acquire(slot.slot, client=client, id=id)
         except GoneError:
