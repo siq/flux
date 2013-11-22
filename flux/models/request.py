@@ -21,7 +21,7 @@ Msg = bind(truss, 'truss/1.0/message')
 
 SlotTypes = {
     'text': (scheme.Text, {'type': 'textbox'}),
-    'textarea': (scheme.Text, {'type': 'textbox', 'multiline': True}),
+    'textarea': (scheme.Text, {'type': 'textbox', 'options': {'multiline': True}}),
 }
 
 class Request(Model):
