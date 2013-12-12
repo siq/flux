@@ -93,22 +93,31 @@ class Request(Model):
         fields = {}
         elements = []
 
-        for token, slot in self.slots.iteritems():
+        # TODO: temporary hack to force text fields to bottom. 
+        # slots definition needs some sort of keyorder
+        slots = self.slots.copy()
+        for token in slots.keys():
+            slot = slots[token]
+            if slot.slot in SlotTypes:
+                continue
+
+            slots.pop(token)
+            fields[token] = scheme.UUID(nonempty=True, source={
+                'resource': 'docket.entity/1.0/enamel/1.0/infoset',
+            })
+            elements.append({
+                'field': token,
+                'label': slot.title,
+                'type': 'gridselector',
+            })
+
+        for token, slot in slots.iteritems():
             field = SlotTypes.get(slot.slot)
             if field:
                 fields[token] = field[0]()
                 element = {'label': slot.title, 'field': token}
                 element.update(field[1])
                 elements.append(element)
-            else:
-                fields[token] = scheme.UUID(nonempty=True, source={
-                    'resource': 'docket.entity/1.0/enamel/1.0/infoset',
-                })
-                elements.append({
-                    'field': token,
-                    'label': slot.title,
-                    'type': 'gridselector',
-                })
 
         return {'schema': scheme.Structure(fields), 'layout': [{'elements': elements}]}
 
