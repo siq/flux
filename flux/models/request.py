@@ -43,6 +43,7 @@ class Request(Model):
     slots = relationship('RequestSlot', cascade='all,delete-orphan',
         passive_deletes=True, backref='request',
         collection_class=attribute_mapped_collection('token'))
+    slot_order = Array(TextType())
     products = relationship('RequestProduct', cascade='all,delete-orphan',
         passive_deletes=True, backref='request',
         collection_class=attribute_mapped_collection('token'))
@@ -77,8 +78,7 @@ class Request(Model):
                 request.attachments.append(RequestAttachment(**attachment))
 
         if slots:
-            for key, value in slots.iteritems():
-                request.slots[key] = RequestSlot(token=key, **value)
+            request._setup_slots(request, attrs.get('slot_order'), slots)
 
         session.add(request)
         return request
@@ -92,32 +92,26 @@ class Request(Model):
     def generate_form(self):
         fields = {}
         elements = []
+        slots = self.slots
 
-        # TODO: temporary hack to force text fields to bottom. 
-        # slots definition needs some sort of keyorder
-        slots = self.slots.copy()
-        for token in slots.keys():
+        key_order = self.slot_order if self.slot_order else slots.keys()
+        for token in key_order:
             slot = slots[token]
-            if slot.slot in SlotTypes:
-                continue
-
-            slots.pop(token)
-            fields[token] = scheme.UUID(nonempty=True, source={
-                'resource': 'docket.entity/1.0/enamel/1.0/infoset',
-            })
-            elements.append({
-                'field': token,
-                'label': slot.title,
-                'type': 'gridselector',
-            })
-
-        for token, slot in slots.iteritems():
             field = SlotTypes.get(slot.slot)
             if field:
                 fields[token] = field[0]()
                 element = {'label': slot.title, 'field': token}
                 element.update(field[1])
                 elements.append(element)
+            else:
+                fields[token] = scheme.UUID(nonempty=True, source={
+                    'resource': 'docket.entity/1.0/enamel/1.0/infoset',
+                })
+                elements.append({
+                    'field': token,
+                    'label': slot.title,
+                    'type': 'gridselector',
+                })
 
         return {'schema': scheme.Structure(fields), 'layout': [{'elements': elements}]}
 
@@ -156,8 +150,13 @@ class Request(Model):
         if slots:
             self.slots = {}
             session.flush()
-            for key, value in slots.iteritems():
-                self.slots[key] = RequestSlot(token=key, **value)
+            slot_order = attrs.pop('slot_order', self.slot_order)
+            self._setup_slots(self, slot_order, slots)
+
+        slot_order = attrs.pop('slot_order', None)
+        if slot_order:
+            self._setup_slots(self, slot_order, self.slots)
+            self.slot_order = slot_order
 
         products = attrs.pop('products', None)
         if products:
@@ -276,6 +275,21 @@ class Request(Model):
             assignee.firstname, assignee.lastname)
         Msg.create(sender=assignee.email, recipients=[{'to': [originator.email]}],
             subject=subject, body=body)
+
+    @classmethod
+    def _setup_slots(cls, request, slot_order, slots):
+        slots = slots.copy()
+        slot_order = slot_order or slots.keys()
+        request_slots = request.slots
+        for key in slot_order:
+            try:
+                value = slots.pop(key)
+            except KeyError:
+                raise ValidationError('invalid-slot-order')
+            if key not in request_slots:
+                request_slots[key] = RequestSlot(token=key, **value)
+        if slots:
+            raise ValidationError('invalid-slot-order')
 
     def _update_status(self, status):
         if self.status == status:

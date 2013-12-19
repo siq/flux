@@ -27,6 +27,7 @@ class Request(Resource):
             'title': Text(),
             'slot': Token(nonempty=True),
         }, nonempty=True))
+        slot_order = Sequence(Token(nonempty=True))
         products = Map(key=Token(nonempty=True), value=Structure({
             'title': Text(),
             'product': Surrogate(nonempty=True),
