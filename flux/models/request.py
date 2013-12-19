@@ -150,13 +150,12 @@ class Request(Model):
         if slots:
             self.slots = {}
             session.flush()
-            slot_order = attrs.pop('slot_order', self.slot_order)
+            slot_order = attrs.get('slot_order', self.slot_order)
             self._setup_slots(self, slot_order, slots)
 
-        slot_order = attrs.pop('slot_order', None)
+        slot_order = attrs.get('slot_order', None)
         if slot_order:
             self._setup_slots(self, slot_order, self.slots)
-            self.slot_order = slot_order
 
         products = attrs.pop('products', None)
         if products:
