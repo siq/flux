@@ -12,7 +12,6 @@ from alembic import op
 from sqlalchemy import text
 
 from scheme.formats import Yaml
-from flux.models import Workflow
 
 def upgrade():
     connection = op.get_bind()
