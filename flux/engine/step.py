@@ -76,7 +76,11 @@ class Step(Element):
             if output['status'] == 'valid':
                 status, outcome, values = self._parse_outcome(operation, output)
                 if status == 'completed':
-                    execution.complete(session, outcome)
+                    if execution.status == 'aborting':
+                        failure = True
+                        execution.abort(session, outcome)
+                    else:
+                        execution.complete(session, outcome)
                 else:
                     failure = True
                     execution.fail(session, outcome)
@@ -86,6 +90,9 @@ class Step(Element):
         elif status == 'failed':
             failure = True
             execution.fail(session)
+        elif status == 'aborted':
+            failure = True
+            execution.abort(session)
         elif status == 'timedout':
             failure = True
             execution.timeout(session)
@@ -104,6 +111,8 @@ class Step(Element):
         if environment.failure:
             if execution.status == 'failed':
                 return run.fail(session)
+            elif execution.status == 'aborted':
+                return run.abort(session)
             elif execution.status == 'timedout':
                 return run.timeout(session)
 
@@ -115,6 +124,8 @@ class Step(Element):
                 return run.fail(session)
             if executions.filter(execution_status=='timedout').count():
                 return run.timeout(session)
+            if executions.filter(execution_status=='aborted').count():
+                return run.abort(session)
             if not executions.filter(execution_status!='completed').count():
                 return run.complete(session)
 

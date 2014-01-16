@@ -72,7 +72,7 @@ class Run(Model):
     def abort_executions(self, session):
         for execution in self.active_executions.all():
             session.refresh(execution, lockmode='update')
-            execution.abort(session)
+            execution.initiate_abort(session)
             session.commit()
 
     def associate_product(self, token, product):
@@ -148,7 +148,7 @@ class Run(Model):
         else:
             session.commit()
 
-    def initiate_abort(self, session):
+    def abort(self, session):
         self._end_run(session, 'aborted')
 
     def invalidate(self, session):
@@ -172,10 +172,10 @@ class Run(Model):
                 if self.status != 'prepared':
                     raise ValidationError('invalid-transition')
                 task = 'initiate'
-            elif status == 'aborted':
+            elif status == 'aborting':
                 if self.is_active:
                     task = 'abort'
-                elif self.status != 'aborted':
+                elif self.status != 'aborting':
                     raise ValidationError('invalid-transition')
 
         self.update_with_mapping(attrs, ignore='id')

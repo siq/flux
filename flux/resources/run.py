@@ -41,7 +41,7 @@ class Run(Resource):
     class update(Resource.update):
         support_returning = True
         fields = {
-            'status': Enumeration('aborted pending', ignored_values='active completed'
+            'status': Enumeration('aborting pending', ignored_values='active completed'
                 ' failed invalidated prepared suspended timedout waiting'),
         }
 

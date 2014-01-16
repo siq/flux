@@ -49,15 +49,10 @@ class WorkflowExecution(Model):
     def workflow(self):
         return self.run.workflow
 
-    def abort(self, session):
-        if not self.is_active:
-            return
+    def abort(self, session, outcome=None):
         self.status = 'aborted'
-        self.ended = current_timestamp()
-        try:
-            Process.execute('update', {'status': 'aborted'}, subject=self.id)
-        except GoneError:
-            log('warning', 'no corresponding process resource for %r', self)
+        if outcome:
+            self.outcome = outcome
 
     def complete(self, session, outcome):
         self.status = 'completed'
@@ -78,6 +73,16 @@ class WorkflowExecution(Model):
         self.status = 'failed'
         if outcome:
             self.outcome = outcome
+
+    def initiate_abort(self, session):
+        if not self.is_active or self.status == 'aborting':
+            return
+
+        self.status = 'aborting'
+        try:
+            Process.execute('update', {'status': 'aborting'}, subject=self.id)
+        except GoneError:
+            log('warning', 'no corresponding process resource for %r', self)
 
     def invalidate(self, session, errors):
         self.status = 'invalidated'

@@ -26,7 +26,7 @@ class Execution(Resource):
 
     class update(Resource.update):
         fields = {
-            'status': Enumeration('aborted', nonempty=True),
+            'status': Enumeration('aborting', nonempty=True),
         }
 
     class task:

@@ -7,6 +7,15 @@ class OperationMixin(object):
     def abort(self, session, data):
         pass
 
+    def aborted(self,  state=None):
+        """Constructs a response for a platoon process executor indicating
+        an operation has aborted."""
+
+        response = {'status': 'aborted'}
+        if state:
+            response['state'] = state
+        return response
+
     def executing(self, state=None):
         """Constructs a response for a platoon process executor indicating
         an operation is executing."""
@@ -22,8 +31,10 @@ class OperationMixin(object):
             response(self.initiate(session, data))
         elif status == 'executing':
             response(self.report(session, data))
-        elif status == 'aborted':
+        elif status == 'aborting':
             response(self.abort(session, data))
+        #elif status == 'aborted':
+        #    response(self.abort(session, data))
         elif status == 'timedout':
             response(self.timeout(session, data))
 

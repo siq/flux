@@ -55,7 +55,6 @@ class RunController(ModelController):
         task = subject.update(session, **data)
 
         if task == 'abort':
-            subject.initiate_abort(session)
             session.call_after_commit(ScheduledTask.queue_http_task, 'abort-executions',
                 self.flux.prepare('flux/1.0/run', 'task', None,
                     {'task': 'abort-executions', 'id': subject.id}))

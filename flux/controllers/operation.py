@@ -43,7 +43,7 @@ class OperationController(ModelController):
             return # todo: address exception properly
 
         status = data['status']
-        if status in ('completed', 'failed', 'timedout'):
+        if status in ('aborted', 'completed', 'failed', 'timedout'):
             execution.process(session, status, data.get('output'))
         elif status == 'executing':
             execution.update_progress(session, data.get('progress'))
