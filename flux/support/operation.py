@@ -33,8 +33,6 @@ class OperationMixin(object):
             response(self.report(session, data))
         elif status == 'aborting':
             response(self.abort(session, data))
-        #elif status == 'aborted':
-        #    response(self.abort(session, data))
         elif status == 'timedout':
             response(self.timeout(session, data))
 
