@@ -19,6 +19,7 @@ class TestOperation(Operation):
             'outcome': Token(default='completed'),
             'output': Map(Surrogate(nonempty=True), Token(nonempty=True)),
             'duration': Integer(default=5),
+            'delay_abort': Boolean(default=False),
         }),
         'outcomes': {
             'completed': {
@@ -31,6 +32,15 @@ class TestOperation(Operation):
             },
         },
     }
+
+    def abort(self, session, data):
+        process_id = data['id']
+
+        state = data['state']
+        if state and state.get('delay_abort'):
+            return
+
+        self.push(process_id, self.aborted())
 
     def complete(self, session, data):
         id = data['state']['id']
@@ -55,7 +65,7 @@ class TestOperation(Operation):
                 {'task': 'complete-test-operation', 'state': data}),
             delta = input.get('duration', 5))
 
-        return self.executing()
+        return self.executing(state={'delay_abort': input.get('delay_abort')})
 
     def report(self, session, data):
         return {'status': 'executing', 'state': data.get('state')}
