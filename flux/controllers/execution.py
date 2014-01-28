@@ -22,16 +22,14 @@ class ExecutionController(ModelController):
 
     def update(self, request, response, subject, data):
         session = self.schema.session
-
-        status = data.pop('status')
-        if status == 'aborted' and subject.is_active:
-            subject.abort(session)
-            session.commit()
-
-            ScheduledTask.queue_http_task('abort-run',
+        task = subject.update(session, **data)
+        if task == 'abort':
+            subject.initiate_abort(session)
+            session.call_after_commit(ScheduledTask.queue_http_task, 'abort-run',
                 self.flux.prepare('flux/1.0/execution', 'task', None,
                     {'task': 'abort-run', 'id': subject.id}))
 
+        session.commit()
         response({'id': subject.id})
 
     def task(self, request, response, subject, data):
@@ -44,7 +42,5 @@ class ExecutionController(ModelController):
 
         task = data['task']
         if task == 'abort-run':
-            run = subject.run
-            run.initiate_abort(session)
-            run.abort_executions(session)
+            subject.run.abort_executions(session)
             session.commit()

@@ -114,6 +114,18 @@ class WorkflowExecution(Model):
     def timeout(self, session):
         self.status = 'timedout'
 
+    def update(self, session, **attrs):
+        task = None
+        status = attrs.get('status')
+        if status == 'aborting':
+            if self.is_active:
+                task = 'abort'
+            elif self.status != 'aborting':
+                raise ValidationError('invalid-transition')
+
+        self.update_with_mapping(attrs, ignore='id')
+        return task
+
     def update_progress(self, session, progress):
         pass
         # TODO: handle progress_update
