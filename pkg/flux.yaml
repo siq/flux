@@ -20,7 +20,8 @@ spire:
     - id: flux
       dependencies: [platoon, docket, truss]
 include:
-  - /etc/siq/local.yaml
+  - common: /etc/siq/local.yaml
+  - flux: /etc/siq/local.yaml
 components:
   - flux.components.Flux
 configuration:
