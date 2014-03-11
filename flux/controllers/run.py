@@ -103,7 +103,8 @@ class RunController(ModelController):
             resource['executions'] = executions
 
     def _send_completion_email(self, subject, data):
-        recipients = [{'to': data['notify'].split(',')}]
+        notify = set(data['notify'].split(','))
+        recipients = [{'to': list(notify)}]
         email_subject = 'Workflow run "%s" completed' % subject.name
         body = 'The workflow run "%s" completed and is available for review.' % subject.name
         Message.create(recipients=recipients, subject=email_subject, body=body)
