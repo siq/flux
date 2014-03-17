@@ -108,7 +108,7 @@ class Step(Element):
         if postoperation:
             postoperation.evaluate(session, environment)
 
-        if environment.failure:
+        if environment.failure and run.is_active:
             if execution.status == 'failed':
                 return run.fail(session)
             elif execution.status == 'aborted':
@@ -116,7 +116,7 @@ class Step(Element):
             elif execution.status == 'timedout':
                 return run.timeout(session)
 
-        if not run.active_executions.count():
+        if not run.active_executions.count() and run.is_active:
             executions = run.executions
             execution_status = WorkflowExecution.status
 
