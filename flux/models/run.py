@@ -71,9 +71,14 @@ class Run(Model):
 
     def abort_executions(self, session):
         for execution in self.active_executions.all():
-            session.refresh(execution, lockmode='update')
-            execution.initiate_abort(session)
-            session.commit()
+            session.begin_nested()
+            try:
+                session.refresh(execution, lockmode='update')
+                execution.initiate_abort(session)
+            except Exception:
+                session.rollback()
+            else:
+                session.commit()
 
     def associate_product(self, token, product):
         self.products[token] = Product(product=product, token=token)
@@ -192,3 +197,5 @@ class Run(Model):
             Event.create(topic=topic, aspects={'id': self.id})
         except Exception:
             log('exception', 'failed to fire %s event', topic)
+        else:
+            log('info', 'fired off %s event for %r', topic, self)
