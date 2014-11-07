@@ -3,7 +3,7 @@ interpolate() {
   perl -p -e 's/\$\{([^}]+)\}/defined $ENV{$1} ? $ENV{$1} : $&/eg; s/\$\{([^}]+)\}//eg' $1 > $2 
 }
 
-$(find -L $BUILDPATH -type f -executable -name python) setup.py install
+$(find -L $BUILDPATH -type f -executable -name python) setup.py install --no-compile
 
 interpolate pkg/flux.yaml flux.yaml.install
 install -D -m 0644 flux.yaml.install $BUILDPATH$SVCPATH/flux/flux.yaml
