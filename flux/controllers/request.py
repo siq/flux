@@ -66,11 +66,15 @@ class RequestController(ModelController):
         if task == 'initiate-request':
             if not subject.initiate(session):
                 subject.status = 'failed'
-
+            else:
+                try:
+                    Event.create(topic='request:changed', aspects={'id': subject.id})
+                except Exception:
+                    log('exception', 'failed to fire request:started event')   
             session.commit()
             if subject.status == 'failed':
                 try:
-                    Event.create(topic='request:completed', aspects={'id': subject.id})
+                    Event.create(topic='request:changed', aspects={'id': subject.id})
                 except Exception:
                     log('exception', 'failed to fire request:completed event')
         elif task == 'cancel-request':
@@ -97,7 +101,7 @@ class RequestController(ModelController):
                 {'task': 'initiate-request', 'id': subject.id}))
         elif new_status == 'completed':
             try:
-                Event.create(topic='request:completed', aspects={'id': subject.id})
+                Event.create(topic='request:changed', aspects={'id': subject.id})
             except Exception:
                 log('exception', 'failed to fire request:completed event')
         elif new_status == 'canceled':
@@ -105,7 +109,7 @@ class RequestController(ModelController):
                 self.flux.prepare('flux/1.0/request', 'task', None,
                 {'task': 'cancel-request', 'id': subject.id}))
             try:
-                Event.create(topic='request:completed', aspects={'id': subject.id})
+                Event.create(topic='request:changed', aspects={'id': subject.id})
             except Exception:
                 log('exception', 'failed to fire request:completed event')
 
@@ -114,7 +118,7 @@ class RequestController(ModelController):
                 self.flux.prepare('flux/1.0/request', 'task', None,
                 {'task': 'decline-request', 'id': subject.id}))
             try:
-                Event.create(topic='request:completed', aspects={'id': subject.id})
+                Event.create(topic='request:changed', aspects={'id': subject.id})
             except Exception:
                 log('exception', 'failed to fire request:completed event')
 
