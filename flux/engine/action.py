@@ -21,6 +21,9 @@ class Action(Element):
             'promote-products': {
                 'products': Map(Text(nonempty=True), Token(nonempty=True), nonempty=True),
             },
+            'update-environment': {
+                'parameters': Map(Text(nonempty=True), Token(nonempty=True), nonempty=True),
+            },
         },
         nonempty=True,
         polymorphic_on='action')
@@ -59,3 +62,11 @@ class PromoteProducts(Action):
         products = environment.interpolator.interpolate(self.interpolation_schema, self.products)
         for token, product in products.iteritems():
             environment.run.associate_product(token, product)
+
+class UpdateEnvironment(Action):
+    polymorphic_identity = 'update-environment'
+    interpolation_schema = Map(Field(nonempty=True), Token(nonempty=True))
+
+    def execute(self, session, environment):
+        parameters = environment.interpolator.interpolate(self.interpolation_schema, self.parameters)
+        environment.run.update_environment(parameters)

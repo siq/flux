@@ -42,6 +42,7 @@ class Run(Model):
     name = Text(nullable=False)
     status = Enumeration(RUN_STATUSES, nullable=False, default='pending')
     parameters = Json()
+    environment = Json()
     started = DateTime(timezone=True)
     ended = DateTime(timezone=True)
 
@@ -88,7 +89,10 @@ class Run(Model):
 
     def contribute_values(self):
         run = {'id': self.id, 'name': self.name, 'started': self.started}
-        parameters = {}
+        if self.environment:
+            parameters = self.environment.copy()
+        else:
+            parameters = {}
 
         workflow = self.workflow.workflow
         if workflow.parameters:
@@ -185,6 +189,12 @@ class Run(Model):
 
         self.update_with_mapping(attrs, ignore='id')
         return task
+
+    def update_environment(self, parameters):
+        if self.environment:
+            self.environment.update(parameters)
+        else:
+            self.environment = parameters
 
     def _end_run(self, session, status):
         self.status = status
