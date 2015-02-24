@@ -191,10 +191,12 @@ class Run(Model):
         return task
 
     def update_environment(self, parameters):
+        environment = {}
         if self.environment:
-            self.environment.update(parameters)
-        else:
-            self.environment = parameters
+            environment.update(self.environment)
+
+        environment.update(parameters)
+        self.environment = environment
 
     def _end_run(self, session, status):
         self.status = status
