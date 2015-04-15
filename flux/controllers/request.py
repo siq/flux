@@ -85,6 +85,9 @@ class RequestController(ModelController):
             session.commit()
         elif task == 'complete-request-operation':
             CreateRequest().complete(session, data)
+        elif task == 'reassign-request-assignee':
+            Request.reassign_assignee(session, event['id'])
+            session.commit()
 
     @support_returning
     def update(self, request, response, subject, data):

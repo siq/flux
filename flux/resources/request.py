@@ -96,6 +96,13 @@ class Request(Resource):
                 'decline-request': {
                     'id': UUID(nonempty=True),
                 },
+                'reassign-request-assignee': {
+                    'event': Structure({
+                        'topic': Text(nonempty=True),
+                        'id': Token(nonempty=True),
+                        'entity': Token(nonempty=True),
+                    }, nonnull=True, strict=False),
+                },
             },
             nonempty=True,
             polymorphic_on='task')

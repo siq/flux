@@ -307,6 +307,11 @@ class Request(Model):
             else:
                 raise ValidationError('invalid-transition')
 
+    @classmethod
+    def reassign_assignee(cls, session, id):
+        for assignee in self._get_user(self.assignee):
+            assignee = '2533dc9a-0fbe-4ab7-bd10-a65e2ec07cfc' # This is a hardcoded UUID of the super admin's id
+
 class RequestAttachment(Model):
     """An attachment."""
 
