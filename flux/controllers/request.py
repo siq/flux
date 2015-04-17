@@ -70,7 +70,7 @@ class RequestController(ModelController):
                 try:
                     Event.create(topic='request:changed', aspects={'id': subject.id})
                 except Exception:
-                    log('exception', 'failed to fire request:started event')   
+                    log('exception', 'failed to fire request:started event')
             session.commit()
             if subject.status == 'failed':
                 try:
@@ -86,8 +86,10 @@ class RequestController(ModelController):
         elif task == 'complete-request-operation':
             CreateRequest().complete(session, data)
         elif task == 'reassign-request-assignee':
-            Request.reassign_assignee(session, event['id'])
-            session.commit()
+            event = data.get('event')
+            if event:
+                Request.reassign_assignee(session, event['id'])
+                session.commit()
 
     @support_returning
     def update(self, request, response, subject, data):
