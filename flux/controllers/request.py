@@ -88,7 +88,7 @@ class RequestController(ModelController):
         elif task == 'reassign-request-assignee':
             event = data.get('event')
             if event:
-                Request.reassign_assignee(session, event['id'])
+                Request.reassign_assignee(session)
                 session.commit()
 
     @support_returning

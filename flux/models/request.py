@@ -7,7 +7,7 @@ from spire.schema import *
 from spire.support.logs import LogHelper
 from sqlalchemy.orm.collections import attribute_mapped_collection
 
-from flux.bindings import truss
+from flux.bindings import truss, platoon
 from flux.constants import *
 from flux.models import EmailTemplate
 
@@ -23,6 +23,8 @@ SlotTypes = {
     'text': (scheme.Text, {'type': 'textbox'}),
     'textarea': (scheme.Text, {'type': 'textbox', 'options': {'multiline': True}}),
 }
+
+Event = bind(platoon, 'platoon/1.0/event')
 
 class Request(Model):
     """An request."""
@@ -179,6 +181,22 @@ class Request(Model):
         self.update_with_mapping(attrs)
         return new_status
 
+    @classmethod
+    def reassign_assignee(cls, session, id):
+        assigneeRequests = session.query(Request).filter_by(assignee=id)
+        for request in assigneeRequests:
+            request.assignee = '2533dc9a-0fbe-4ab7-bd10-a65e2ec07cfc' # This is a hardcoded UUID of the super admin's id
+            session.call_after_commit(request._request_changed_event, 'request:changed')
+        return map(lambda m: m.id, assigneeRequests)
+
+    def _request_changed_event(self, topic):
+        try:
+            Event.create(topic=topic, aspects={'id': self.id})
+        except Exception:
+            log('exception', 'failed to fire %s event', topic)
+        else:
+            log('info', 'fired off %s event for %r', topic, self)
+
     def _construct_product(self, client, token, id):
         try:
             slot = self.slots[token]
@@ -306,11 +324,6 @@ class Request(Model):
                 return status
             else:
                 raise ValidationError('invalid-transition')
-
-    @classmethod
-    def reassign_assignee(cls, session, id):
-        for assignee in self._get_user(self.assignee):
-            assignee = '2533dc9a-0fbe-4ab7-bd10-a65e2ec07cfc' # This is a hardcoded UUID of the super admin's id
 
 class RequestAttachment(Model):
     """An attachment."""
