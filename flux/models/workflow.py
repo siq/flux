@@ -78,14 +78,14 @@ class Workflow(Model):
     @classmethod
     def create(cls, session, **attrs):
         if attrs['type'] == 'mule':
-            if not ('package' in attrs and attrs['package']):
+            if not ('packageurl' in attrs and attrs['packageurl']):
                 raise OperationError(token='invalid-mule-package')
             elif not ('endpointnurl' in attrs and attrs['endpointnurl']):
                 raise OperationError(token='invalid-mule-endpointurl')
             else:
-                self.mule_extensions['package'] = attrs['package']
+                self.mule_extensions['packageurl'] = attrs['packageurl']
                 self.mule_extensions['endpointurl'] = attrs['endpointurl']
-                self.mule_extensions['mulefile'] = attrs['mulefile']
+                self.mule_extensions['readmeurl'] = attrs['readmeurl']
         subject = cls(modified=current_timestamp(), **attrs)
         subject.validate_specification()
         session.add(subject)
@@ -100,14 +100,14 @@ class Workflow(Model):
             changed = True
 
         if attrs['type'] == 'mule':
-            if not ('package' in attrs and attrs['package']):
+            if not ('packageurl' in attrs and attrs['packageurl']):
                 raise OperationError(token='invalid-mule-package')
             elif not ('endpointnurl' in attrs and attrs['endpointnurl']):
                 raise OperationError(token='invalid-mule-endpointurl')
             else:
-                self.mule_extensions['package'] = attrs['package']
+                self.mule_extensions['packageurl'] = attrs['packageurl']
                 self.mule_extensions['endpointurl'] = attrs['endpointurl']
-                self.mule_extensions['mulefile'] = attrs['mulefile']
+                self.mule_extensions['readmeurl'] = attrs['readmeurl']
                 
         self.update_with_mapping(attrs, ignore='id')
         self.modified = current_timestamp()
@@ -139,9 +139,9 @@ class WorkflowMule(Model):
 
     id = Identifier()
     workflow_id = ForeignKey('workflow.id', nullable=False, ondelete='CASCADE')
-    package = Text(unique=True, nullable=False)
+    packageurl = Text(unique=True, nullable=False)
     endpointurl = Text(unique=True, nullable=False)
-    mulefile = Text(unique=True)
+    readmeurl = Text(unique=True)
     
 class DocketDependency(Unit):
     docket_entity = MeshDependency('docket.entity')

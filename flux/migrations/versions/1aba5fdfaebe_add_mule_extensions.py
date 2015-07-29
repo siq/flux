@@ -25,8 +25,8 @@ def upgrade():
     ForeignKeyConstraint(['workflow_id'], ['workflow.id'], ),
     PrimaryKeyConstraint('id'),
     UniqueConstraint('endpointurl'),
-    UniqueConstraint('mulefile'),
-    UniqueConstraint('package')
+    UniqueConstraint('readmeurl'),
+    UniqueConstraint('packageurl')
     )
     op.add_column('workflow', Column('type', EnumerationType(), nullable=True))
     op.execute("update workflow set type = 'yaml' where type IS NULL")

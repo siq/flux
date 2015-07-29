@@ -37,9 +37,9 @@ class Workflow(Resource):
         type = Enumeration('yaml mule', default='yaml')
         policies = Sequence(Text(), deferred=True, readonly=True)
         mule_extensions = Structure({
-            'package': Text(nonempty=True),
+            'packageurl': Text(nonempty=True),
             'endpointurl': Text(nonempty=True),
-            'mulefile': Text(),
+            'readmeurl': Text(),
         })
 
     class create(Resource.create):
