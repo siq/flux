@@ -17,7 +17,7 @@ class WorkflowController(ModelController):
     version = (1, 0)
 
     model = Workflow
-    mapping = 'id name designation is_service specification modified'
+    mapping = 'id name designation is_service specification modified type'
     schema = SchemaDependency('flux')
 
     @support_returning
@@ -116,6 +116,13 @@ class WorkflowController(ModelController):
 
         if 'specification' in include:
             resource['specification'] = model.specification
+            
+        if 'policies' in include:            
+            resource['policies'] = model.policies
+            
+        if model.type == 'mule':
+            resource['mule_extensions'] = model.mule_extensions
+            
 
     def _create_change_event(self, subject):
         try:
