@@ -79,7 +79,7 @@ class Workflow(Model):
     def create(cls, session, **attrs):
         if attrs['type'] == 'mule':
             if not ('packageurl' in attrs and attrs['packageurl']):
-                raise OperationError(token='invalid-mule-package')
+                raise OperationError(token='invalid-mule-packageurl')
             elif not ('endpointnurl' in attrs and attrs['endpointnurl']):
                 raise OperationError(token='invalid-mule-endpointurl')
             else:
@@ -101,7 +101,7 @@ class Workflow(Model):
 
         if attrs['type'] == 'mule':
             if not ('packageurl' in attrs and attrs['packageurl']):
-                raise OperationError(token='invalid-mule-package')
+                raise OperationError(token='invalid-mule-packageurl')
             elif not ('endpointnurl' in attrs and attrs['endpointnurl']):
                 raise OperationError(token='invalid-mule-endpointurl')
             else:
