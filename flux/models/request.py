@@ -39,13 +39,15 @@ class Request(Model):
     originator = Token(nullable=False)
     assignee = Token(nullable=False)
     template_id = ForeignKey('emailtemplate.id')
+    slot_order = Array(TextType())
+    claimed = DateTime(timezone=True)
+    completed = DateTime(timezone=True)
 
     attachments = relationship('RequestAttachment', cascade='all,delete-orphan',
         passive_deletes=True, backref='request')
     slots = relationship('RequestSlot', cascade='all,delete-orphan',
         passive_deletes=True, backref='request',
         collection_class=attribute_mapped_collection('token'))
-    slot_order = Array(TextType())
     products = relationship('RequestProduct', cascade='all,delete-orphan',
         passive_deletes=True, backref='request',
         collection_class=attribute_mapped_collection('token'))
@@ -313,17 +315,20 @@ class Request(Model):
             return
 
         if self.status == 'prepared':
-            if status == 'pending':
-                self.status = status
-                return status
-            else:
+            if status != 'pending':
                 raise ValidationError('invalid-transition')
         elif self.status in ('claimed', 'pending'):
-            if status in ('claimed', 'completed', 'canceled', 'declined'):
-                self.status = status
-                return status
+            if status == 'claimed':
+                self.claimed = scheme.current_timestamp()
+            elif status in ('completed', 'canceled', 'declined'):
+                self.completed = scheme.current_timestamp()
             else:
                 raise ValidationError('invalid-transition')
+        else:
+            raise ValidationError('invalid-transition')
+
+        self.status = status
+        return status
 
 class RequestAttachment(Model):
     """An attachment."""

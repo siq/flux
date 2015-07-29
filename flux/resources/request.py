@@ -47,6 +47,12 @@ class Request(Resource):
         }, deferred=True, readonly=True)
         entities = Map(key=Token(nonempty=True), value=Text(nonempty=True),
             nonnull=True, oncreate=False, deferred=True)
+        claimed = DateTime(
+            readonly=True, operators='gt gte lt lte', sortable=True,
+            description='The date and time when this request is claimed')
+        completed = DateTime(
+            readonly=True, operators='gt gte lt lte', sortable=True,
+            description='The date and time when this request is completed, canceled or declined')
 
     class create(Resource.create):
         support_returning = True
@@ -87,7 +93,7 @@ class Request(Resource):
                     'id': UUID(nonempty=True),
                 },
                 'complete-request-operation': {
-                    'process_id': UUID(nonempty=True), 
+                    'process_id': UUID(nonempty=True),
                     'request_id': UUID(nonempty=True),
                 },
                 'cancel-request': {
