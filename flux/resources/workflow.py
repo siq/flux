@@ -36,11 +36,11 @@ class Workflow(Resource):
         modified = DateTime(utc=True, readonly=True)
         type = Enumeration('yaml mule', default='yaml')
         policies = Sequence(Text(), deferred=True, readonly=True)
-        mule_extensions = Sequence(Structure({
+        mule_extensions = Structure({
             'package': Text(nonempty=True),
             'endpointurl': Text(nonempty=True),
             'mulefile': Text(),
-        }))
+        })
 
     class create(Resource.create):
         fields = {
