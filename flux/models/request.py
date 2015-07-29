@@ -318,8 +318,8 @@ class Request(Model):
                 return status
             else:
                 raise ValidationError('invalid-transition')
-        elif self.status == 'pending':
-            if status in ('completed', 'canceled', 'declined'):
+        elif self.status in ('claimed', 'pending'):
+            if status in ('claimed', 'completed', 'canceled', 'declined'):
                 self.status = status
                 return status
             else:
