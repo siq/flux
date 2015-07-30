@@ -53,7 +53,7 @@ class Workflow(Model):
     type = Enumeration(enumeration="yaml mule", nullable=False, default='yaml')
     
     mule_extensions = relationship('WorkflowMule', cascade='all,delete-orphan',
-        passive_deletes=True, backref='workflow')
+        passive_deletes=True, uselist=False, backref='workflow')
 
     runs = relationship('Run', backref='workflow')
 
@@ -77,16 +77,16 @@ class Workflow(Model):
 
     @classmethod
     def create(cls, session, **attrs):
+        if attrs['type'] == 'mule':        
+            mule_extensions = attrs.pop('mule_extensions') 
+        subject = cls(modified=current_timestamp(), **attrs)
         if attrs['type'] == 'mule':
-            if not ('packageurl' in attrs and attrs['packageurl']):
+            if not mule_extensions['packageurl']:
                 raise OperationError(token='invalid-mule-packageurl')
-            elif not ('endpointnurl' in attrs and attrs['endpointnurl']):
+            elif not mule_extensions['endpointurl']:
                 raise OperationError(token='invalid-mule-endpointurl')
             else:
-                self.mule_extensions['packageurl'] = attrs['packageurl']
-                self.mule_extensions['endpointurl'] = attrs['endpointurl']
-                self.mule_extensions['readmeurl'] = attrs['readmeurl']
-        subject = cls(modified=current_timestamp(), **attrs)
+                subject.mule_extensions = WorkflowMule(**mule_extensions)
         subject.validate_specification()
         session.add(subject)
         return subject
@@ -99,16 +99,6 @@ class Workflow(Model):
             self.validate_specification()
             changed = True
 
-        if attrs['type'] == 'mule':
-            if not ('packageurl' in attrs and attrs['packageurl']):
-                raise OperationError(token='invalid-mule-packageurl')
-            elif not ('endpointnurl' in attrs and attrs['endpointnurl']):
-                raise OperationError(token='invalid-mule-endpointurl')
-            else:
-                self.mule_extensions['packageurl'] = attrs['packageurl']
-                self.mule_extensions['endpointurl'] = attrs['endpointurl']
-                self.mule_extensions['readmeurl'] = attrs['readmeurl']
-                
         self.update_with_mapping(attrs, ignore='id')
         self.modified = current_timestamp()
 

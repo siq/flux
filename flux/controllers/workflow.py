@@ -121,7 +121,7 @@ class WorkflowController(ModelController):
             resource['policies'] = model.policies
             
         if model.type == 'mule':
-            resource['mule_extensions'] = model.mule_extensions
+            resource['mule_extensions'] = model.mule_extensions.extract_dict('packageurl endpointurl readmeurl')
             
 
     def _create_change_event(self, subject):
