@@ -1,12 +1,12 @@
 """add_mule_extensions
 
-Revision: 1aba5fdfaebe
-Revises: 494215ec15e4
-Created: 2015-07-28 08:51:03.659308
+Revision: 3cbe1f2d147f
+Revises: 1aba5fdfaebe
+Created: 2015-07-30 08:01:27.942569
 """
 
-revision = '1aba5fdfaebe'
-down_revision = '494215ec15e4'
+revision = '3cbe1f2d147f'
+down_revision = '1aba5fdfaebe'
 
 from alembic import op
 from spire.schema.fields import *
@@ -19,18 +19,18 @@ def upgrade():
     op.create_table('workflow_mule',
         Column('id', UUIDType(), nullable=False),
         Column('workflow_id', UUIDType(), nullable=False),
-        Column('package', TextType(), nullable=False),
+        Column('packageurl', TextType(), nullable=False),
         Column('endpointurl', TextType(), nullable=False),
-        Column('mulefile', TextType(), nullable=True),
+        Column('readmeurl', TextType(), nullable=True),
         ForeignKeyConstraint(['workflow_id'], ['workflow.id'], ondelete='CASCADE'),
         PrimaryKeyConstraint('id'),
         UniqueConstraint('endpointurl'),
-        UniqueConstraint('readmeurl'),
-        UniqueConstraint('packageurl')
+        UniqueConstraint('packageurl'),
+        UniqueConstraint('readmeurl')
     )
     op.add_column('workflow', Column('type', EnumerationType(), nullable=True))
     op.execute("update workflow set type = 'yaml' where type IS NULL")
-    op.alter_column('workflow', 'type', nullable=False)    
+    op.alter_column('workflow', 'type', nullable=False)
     ### end Alembic commands ###
 
 def downgrade():
