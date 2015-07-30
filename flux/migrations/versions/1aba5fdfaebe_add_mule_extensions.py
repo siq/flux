@@ -1,7 +1,7 @@
 """add_mule_extensions
 
-Revision: 3cbe1f2d147f
-Revises: 1aba5fdfaebe
+Revision: 1aba5fdfaebe
+Revises: 494215ec15e4
 Created: 2015-07-30 08:01:27.942569
 """
 
