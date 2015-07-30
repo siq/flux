@@ -29,7 +29,7 @@ def upgrade():
         UniqueConstraint('readmeurl')
     )
     op.add_column('workflow', Column('type', EnumerationType(), nullable=True))
-    op.execute("update workflow set type = 'yaml' where type IS NULL")
+    op.execute("update workflow set type = 'yaml'")
     op.alter_column('workflow', 'type', nullable=False)
     ### end Alembic commands ###
 
