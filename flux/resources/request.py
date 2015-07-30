@@ -48,10 +48,10 @@ class Request(Resource):
         entities = Map(key=Token(nonempty=True), value=Text(nonempty=True),
             nonnull=True, oncreate=False, deferred=True)
         claimed = DateTime(
-            readonly=True, operators='gt gte lt lte', sortable=True,
+            utc=True, readonly=True, operators='gt gte lt lte', sortable=True,
             description='The date and time when this request is claimed')
         completed = DateTime(
-            readonly=True, operators='gt gte lt lte', sortable=True,
+            utc=True, readonly=True, operators='gt gte lt lte', sortable=True,
             description='The date and time when this request is completed, canceled or declined')
 
     class create(Resource.create):

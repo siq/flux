@@ -100,6 +100,9 @@ class RequestController(ModelController):
         new_status = subject.update(session, self.docket_entity, **data)
         session.commit()
 
+        if new_status:
+            Event.create(topic='request:changed', aspects={'id': subject.id})
+
         if new_status == 'pending':
             ScheduledTask.queue_http_task('initiate-request',
                 self.flux.prepare('flux/1.0/request', 'task', None,

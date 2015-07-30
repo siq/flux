@@ -43,6 +43,8 @@ ENTITY_REGISTRATIONS = [
         cached_attributes={
             'status': {'type': 'text'},
             'assignee': {'type': 'text'},
+            'completed': {'type': 'datetime'},
+            'claimed': {'type': 'datetime'},
         }
     ),                        
 ]
