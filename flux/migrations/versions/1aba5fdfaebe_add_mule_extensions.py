@@ -5,8 +5,8 @@ Revises: 494215ec15e4
 Created: 2015-07-30 08:01:27.942569
 """
 
-revision = '3cbe1f2d147f'
-down_revision = '1aba5fdfaebe'
+revision = '1aba5fdfaebe'
+down_revision = '494215ec15e4'
 
 from alembic import op
 from spire.schema.fields import *
