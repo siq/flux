@@ -143,7 +143,7 @@ class Request(Model):
         if assignee.email:
             self._send_cancel_email(assignee, originator)
 
-    def update(self, session, docket_entity, **attrs):
+    def update(self, session, docket_entity, message=None, **attrs):
         attachments = attrs.pop('attachments', None)
         if attachments:
             self.attachments = []
@@ -178,7 +178,7 @@ class Request(Model):
         new_status = None
         status = attrs.pop('status', None)
         if status:
-            new_status = self._update_status(status)
+            new_status = self._update_status(status, message)
 
         self.update_with_mapping(attrs)
         return new_status
@@ -310,7 +310,7 @@ class Request(Model):
         if slots:
             raise ValidationError('invalid-slot-order')
 
-    def _update_status(self, status):
+    def _update_status(self, status, message):
         if self.status == status:
             return
 
@@ -320,7 +320,17 @@ class Request(Model):
         elif self.status in ('claimed', 'pending'):
             if status == 'claimed':
                 self.claimed = scheme.current_timestamp()
-            elif status in ('completed', 'canceled', 'declined'):
+            elif status == 'declined':
+                if not message:
+                    raise ValidationError(structure={
+                        'message': ValidationError('message-required-for-status')
+                    })
+                elif message['author'] != self.assignee:
+                    raise ValidationError(structure={
+                        'message': ValidationError('invalid-message-author')
+                    })
+                self.completed = scheme.current_timestamp()
+            elif status in ('completed', 'canceled'):
                 self.completed = scheme.current_timestamp()
             else:
                 raise ValidationError('invalid-transition')

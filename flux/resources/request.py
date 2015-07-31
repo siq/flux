@@ -5,6 +5,7 @@ from flux.constants import *
 
 __all__ = ('Request',)
 
+
 class Request(Resource):
     """A request."""
 
@@ -53,6 +54,12 @@ class Request(Resource):
         completed = DateTime(
             utc=True, readonly=True, operators='gt gte lt lte', sortable=True,
             description='The date and time when this request is completed, canceled or declined')
+        messages = Sequence(Structure({
+            'id': Token(nonempty=True),
+            'author': Token(nonempty=True),
+            'occurrence': DateTime(nonempty=True, utc=True),
+            'message': Text(),
+        }), deferred=True, readonly=True)
 
     class create(Resource.create):
         support_returning = True
@@ -119,3 +126,20 @@ class Request(Resource):
 
     class update(Resource.update):
         support_returning = True
+        fields = {
+            'message': Structure(
+                structure={
+                    'author': Token(
+                        nonempty=True,
+                        description=(
+                            'Required to be assignee when setting '
+                            'Request attribute `status` to `declined`'
+                        )
+                    ),
+                    'message': Text(nonempty=True),
+                }, description=(
+                    'A message to append to request. Required when setting '
+                    'Request attribute `status` to `declined`'
+                )
+            ),
+        }

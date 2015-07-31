@@ -97,7 +97,14 @@ class RequestController(ModelController):
             return subject
 
         session = self.schema.session
+        message = data.get('message')
+
         new_status = subject.update(session, self.docket_entity, **data)
+        session.flush()
+
+        if message:
+            Message.create(session, subject.id, **message)
+
         session.commit()
 
         if new_status:
@@ -149,13 +156,22 @@ class RequestController(ModelController):
         if data and 'include' in data:
             include = data['include']
 
-        if include and 'template' in include:
+        if not include:
+            return
+
+        if 'template' in include:
             template = model.template
             if template:
                 resource['template'] = template.template
 
-        if include and 'form' in include:
+        if 'form' in include:
             resource['form'] = model.generate_form()
 
-        if include and 'entities' in include:
+        if 'entities' in include:
             resource['entities'] = model.generate_entities()
+
+        if 'messages' in include:
+            resource['messages'] = [
+                msg.extract_dict('id author occurrence message')
+                for msg in model.messages
+            ]
