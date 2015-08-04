@@ -19,6 +19,10 @@ class Request(Resource):
         status = Enumeration(REQUEST_STATUSES, operators='equal')
         originator = Token(nonempty=True, operators='equal')
         assignee = Token(nonnull=True, operators='equal')
+        creator = Text(
+            operators='equal icontains',
+            description='An external requestor username'
+        )
         attachments = Sequence(Structure({
             'token': Token(),
             'title': Text(),

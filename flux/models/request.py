@@ -38,6 +38,7 @@ class Request(Model):
     status = Enumeration(REQUEST_STATUSES, nullable=False, default='pending')
     originator = Token(nullable=False)
     assignee = Token(nullable=False)
+    creator = Text()
     template_id = ForeignKey('emailtemplate.id')
     slot_order = Array(TextType())
     claimed = DateTime(timezone=True)

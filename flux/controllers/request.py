@@ -17,7 +17,10 @@ class RequestController(ModelController):
     version = (1, 0)
 
     model = Request
-    mapping = 'id name status originator assignee slot_order claimed completed'
+    mapping = (
+        'id name status originator assignee creator '
+        'slot_order claimed completed'
+    )
     schema = SchemaDependency('flux')
 
     docket_entity = MeshDependency('docket.entity')
