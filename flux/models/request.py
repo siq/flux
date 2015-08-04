@@ -145,6 +145,9 @@ class Request(Model):
             self._send_cancel_email(assignee, originator)
 
     def update(self, session, docket_entity, message=None, **attrs):
+        if self.status in ('canceled', 'completed', 'declined'):
+            raise OperationError(token='cannot-update-with-status')
+
         attachments = attrs.pop('attachments', None)
         if attachments:
             self.attachments = []
