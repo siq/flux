@@ -35,12 +35,12 @@ class WorkflowController(ModelController):
 
     def delete(self, request, response, subject, data):
         # check if workflow id has been associated with any policy
-        #workflowEntity = self.docket_entity.bind('docket.entity/1.0/flux/1.0/workflow')
-        #workflow = workflowEntity.get(subject.id, include=['policies'])       
-        #policies = workflow.policies
-        #if not policies:
-            #log('info', 'workflow_id %s cannot be deleted as it is associated with policies %s', subject.id, policies)
-            #raise OperationError(token='cannot-delete-inuse-workflow')
+        workflowEntity = self.docket_entity.bind('docket.entity/1.0/flux/1.0/workflow')
+        workflow = workflowEntity.get(subject.id, include=['policies'])       
+        policies = workflow.policies
+        if len(policies) > 0:
+            log('info', 'workflow_id %s cannot be deleted as it is associated with policies %s', subject.id, policies)
+            raise OperationError(token='cannot-delete-inuse-workflow')
         super(WorkflowController, self).delete(request, response, subject, data)
         self._create_change_event(subject)
 
