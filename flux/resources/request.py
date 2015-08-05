@@ -70,8 +70,8 @@ class Request(Resource):
         fields = {
             'status': Enumeration('prepared pending', nonnull=True),
             'message': Structure({
-                'author': Token(nonempty=True),
-                'message': Text(nonempty=True),
+                'author': Token(nonnull=True),
+                'message': Text(min=1, nonnull=True),
             }),
         }
 
@@ -134,13 +134,13 @@ class Request(Resource):
             'message': Structure(
                 structure={
                     'author': Token(
-                        nonempty=True,
+                        nonnull=True,
                         description=(
                             'Required to be assignee when setting '
                             'Request attribute `status` to `declined`'
                         )
                     ),
-                    'message': Text(nonempty=True),
+                    'message': Text(min=1, nonnull=True),
                 }, description=(
                     'A message to append to request. Required when setting '
                     'Request attribute `status` to `declined`'
