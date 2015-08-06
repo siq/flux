@@ -323,18 +323,16 @@ class Request(Model):
                 raise ValidationError('invalid-transition')
         elif self.status in ('claimed', 'pending'):
             if status == 'claimed':
+                self._validate_message(message, self.assignee)
                 self.claimed = scheme.current_timestamp()
-            elif status == 'declined':
-                if not message:
+            elif status in ('completed', 'declined'):
+                if status == 'declined' and not message:
                     raise ValidationError(structure={
                         'message': ValidationError('message-required-for-status')
                     })
-                elif message['author'] != self.assignee:
-                    raise ValidationError(structure={
-                        'message': ValidationError('invalid-message-author')
-                    })
+                self._validate_message(message, self.assignee)
                 self.completed = scheme.current_timestamp()
-            elif status in ('completed', 'canceled'):
+            elif status == 'canceled':
                 self.completed = scheme.current_timestamp()
             else:
                 raise ValidationError('invalid-transition')
@@ -343,6 +341,12 @@ class Request(Model):
 
         self.status = status
         return status
+
+    def _validate_message(self, message, designated_author):
+        if message and message['author'] != designated_author:
+            raise ValidationError(structure={
+                'message': ValidationError('invalid-message-author')
+            })
 
 class RequestAttachment(Model):
     """An attachment."""
