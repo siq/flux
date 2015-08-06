@@ -16,7 +16,7 @@ class Request(Resource):
     class schema:
         id = UUID(nonnull=True, oncreate=True, operators='equal')
         name = Text(nonempty=True, operators='equal icontains')
-        status = Enumeration(REQUEST_STATUSES, operators='equal')
+        status = Enumeration(REQUEST_STATUSES, operators='equal in')
         originator = Token(nonempty=True, operators='equal')
         assignee = Token(nonnull=True, operators='equal')
         creator = Text(
