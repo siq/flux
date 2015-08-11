@@ -1,12 +1,12 @@
 """add_mule_extensions
 
 Revision: 1aba5fdfaebe
-Revises: 494215ec15e4
+Revises: 35b2e281e53c
 Created: 2015-07-30 08:01:27.942569
 """
 
 revision = '1aba5fdfaebe'
-down_revision = '494215ec15e4'
+down_revision = '35b2e281e53c'
 
 from alembic import op
 from spire.schema.fields import *
