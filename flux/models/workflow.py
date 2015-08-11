@@ -1,14 +1,21 @@
 from mesh.exceptions import OperationError
 from scheme import current_timestamp
 from scheme.exceptions import SchemeError
+from spire.core import Unit
 from spire.schema import *
+from spire.mesh import MeshDependency
+from flux.bindings import docket
 from sqlalchemy.orm.collections import attribute_mapped_collection
+from spire.support.logs import LogHelper
 
 from flux.engine.workflow import Workflow as WorkflowElement
 
-schema = Schema('flux')
+__all__ = ('Workflow', 'WorkflowMule')
 
-class WorkflowCache(object):
+schema = Schema('flux')
+log = LogHelper('flux')
+
+class WorkflowCache(object):   
     def __init__(self):
         self.cache = {}
 
@@ -43,16 +50,43 @@ class Workflow(Model):
     is_service = Boolean(default=False)
     specification = Text(nullable=False)
     modified = DateTime(timezone=True)
+    type = Enumeration(enumeration="yaml mule", nullable=False, default='yaml')
+    
+    mule_extensions = relationship('WorkflowMule', cascade='all,delete-orphan',
+        passive_deletes=True, uselist=False, backref='workflow')
 
     runs = relationship('Run', backref='workflow')
 
     @property
     def workflow(self):
         return self.cache.acquire(self)
+    
+    @property
+    def policies(self):
+        policyList = []
+        # return the list of policy name associated with this workflow
+        docket_dependency = DocketDependency()
+        Document = docket_dependency.docket_entity.bind('docket.entity/1.0/concert/1.0/document')
+        for policy in Document.query().filter(type='policy').all():
+            if 'workflow' in policy.attachments['parameters']:
+                workflow_id = policy.attachments['parameters']['workflow']
+                if self.id == workflow_id:
+                    policyList.append(policy.name)
+        log('info', 'workflow %s is used by policy %s', self.name, policyList)                    
+        return policyList
 
     @classmethod
     def create(cls, session, **attrs):
+        if attrs['type'] == 'mule':        
+            mule_extensions = attrs.pop('mule_extensions') 
         subject = cls(modified=current_timestamp(), **attrs)
+        if attrs['type'] == 'mule':
+            if not mule_extensions['packageurl']:
+                raise OperationError(token='invalid-mule-packageurl')
+            elif not mule_extensions['endpointurl']:
+                raise OperationError(token='invalid-mule-endpointurl')
+            else:
+                subject.mule_extensions = WorkflowMule(**mule_extensions)
         subject.validate_specification()
         session.add(subject)
         return subject
@@ -85,3 +119,19 @@ class Workflow(Model):
 
         schema = WorkflowElement.unserialize(specification)
         schema.verify()
+
+class WorkflowMule(Model):
+    """Mule extension."""
+
+    class meta:
+        schema = schema
+        tablename = 'workflow_mule'
+
+    id = Identifier()
+    workflow_id = ForeignKey('workflow.id', nullable=False, ondelete='CASCADE')
+    packageurl = Text(unique=True, nullable=False)
+    endpointurl = Text(unique=True, nullable=False)
+    readmeurl = Text(unique=True)
+    
+class DocketDependency(Unit):
+    docket_entity = MeshDependency('docket.entity')

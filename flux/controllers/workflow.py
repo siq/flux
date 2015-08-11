@@ -17,8 +17,9 @@ class WorkflowController(ModelController):
     version = (1, 0)
 
     model = Workflow
-    mapping = 'id name designation is_service specification modified'
+    mapping = 'id name designation is_service specification modified type'
     schema = SchemaDependency('flux')
+    docket_entity = MeshDependency('docket.entity')
 
     @support_returning
     def create(self, request, response, subject, data):
@@ -33,6 +34,13 @@ class WorkflowController(ModelController):
         return subject
 
     def delete(self, request, response, subject, data):
+        # check if workflow id has been associated with any policy
+        workflowEntity = self.docket_entity.bind('docket.entity/1.0/flux/1.0/workflow')
+        workflow = workflowEntity.get(subject.id, include=['policies'])       
+        policies = workflow.policies
+        if len(policies) > 0:
+            log('info', 'workflow_id %s cannot be deleted as it is associated with policies %s', subject.id, policies)
+            raise OperationError(token='cannot-delete-inuse-workflow')
         super(WorkflowController, self).delete(request, response, subject, data)
         self._create_change_event(subject)
 
@@ -98,6 +106,9 @@ class WorkflowController(ModelController):
         return subject
 
     def _annotate_resource(self, request, model, resource, data):
+        if model.type == 'mule':
+            resource['mule_extensions'] = model.mule_extensions.extract_dict('packageurl endpointurl readmeurl')
+        
         include = data and data.get('include')
         if not include:
             return
@@ -116,6 +127,9 @@ class WorkflowController(ModelController):
 
         if 'specification' in include:
             resource['specification'] = model.specification
+            
+        if 'policies' in include:            
+            resource['policies'] = model.policies
 
     def _create_change_event(self, subject):
         try:
