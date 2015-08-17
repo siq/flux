@@ -1,16 +1,20 @@
 from mesh.exceptions import OperationError
 from mesh.standard import bind
-from spire.mesh import ModelController, support_returning
+from spire.core import Dependency
+from spire.mesh import MeshDependency, ModelController, support_returning
 from spire.schema import SchemaDependency, IntegrityError
 from spire.support.logs import LogHelper
+from spire.wsgi.upload import UploadManager
 
 from flux.bindings import platoon
+from flux.constants import *
 from flux.models import *
 from flux.resources import Workflow as WorkflowResource
 from flux.engine.workflow import Workflow as WorkflowEngine
 
 log = LogHelper('flux')
 Event = bind(platoon, 'platoon/1.0/event')
+ScheduledTask = bind(platoon, 'platoon/1.0/scheduledtask')
 
 class WorkflowController(ModelController):
     resource = WorkflowResource
@@ -20,9 +24,27 @@ class WorkflowController(ModelController):
     mapping = 'id name designation is_service specification modified type'
     schema = SchemaDependency('flux')
     docket_entity = MeshDependency('docket.entity')
+    uploads = Dependency(UploadManager)
+    flux = MeshDependency('flux')
 
     @support_returning
     def create(self, request, response, subject, data):
+        if 'type' in data and data['type'] == 'mule':
+            data['specification'] = MULE_DUMMY_SPEC # set no-op yaml spec to mule script          
+            if not 'mule_extensions' in data: # if mule_extensions doesn't exist, get the extension information from mule archive
+                data['mule_extensions'] = {}
+                if not data['filepath']:
+                    raise OperationError(token='mule-script-upload-required')
+                else:
+                    data['mule_extensions']['packageurl'] = DOWNLOAD_URL_PREFIX + data['filepath']                
+                    try:
+                        filepath = self.uploads.find(data.pop('filepath'))
+                    except ValueError:
+                        raise OperationError(token='invalid-mule-script-upload')
+                endpointurl, readmeurl = self._extract_zipfile(filepath)
+                data['mule_extensions']['endpointurl'] = endpointurl
+                data['mule_extensions']['readmeurl'] = readmeurl
+        
         session = self.schema.session
         subject = self.model.create(session, **data)
 
@@ -31,6 +53,8 @@ class WorkflowController(ModelController):
         except IntegrityError:
             raise OperationError(token='duplicate-workflow-name')
 
+        if 'type' in data and data['type'] == 'mule' and filepath:
+            self._schedule_deploy_mulescript(data['name'], filepath)
         return subject
 
     def delete(self, request, response, subject, data):
@@ -50,6 +74,13 @@ class WorkflowController(ModelController):
             raise OperationError(token='cannot-delete-inuse-workflow')        
         super(WorkflowController, self).delete(request, response, subject, data)
         self._create_change_event(subject)
+        if workflow.type == 'mule':
+            packageurl = workflow.mule_extensions['packageurl']
+            package = packageurl.split('/')[-1] # get mule app name from packageurl
+            readmeurl = workflow.mule_extensions['readmeurl']            
+            if readmeurl:
+                readme = readmeurl.split('/')[-1] # get mule readme name from readmeurl
+            self._schedule_undeploy_mulescript(workflow.name, package, readme)        
 
     def generate(self, request, response, subject, data):
         name = data['name']
@@ -99,7 +130,10 @@ class WorkflowController(ModelController):
     def update(self, request, response, subject, data):
         if not data:
             return subject
-
+        
+        if subject.type == 'mule' and 'mule_extensions' in data:
+            data.pop('mule_extensions') # no update of mule extensions is allowed
+        
         session = self.schema.session
         changed = subject.update(session, **data)
 
@@ -143,3 +177,74 @@ class WorkflowController(ModelController):
             Event.create(topic='workflow:changed', aspects={'id': subject.id})
         except Exception:
             log('exception', 'failed to fire workflow:changed event')
+
+    def _schedule_deploy_mulescript(self, name, filepath):
+        ScheduledTask.queue_http_task('deploy-mule-script',
+            self.flux.prepare('flux/1.0/workflow', 'task', None,
+            {'task': 'deploy-mule-script', 
+             'name': name, 'filepath': filepath}))
+        
+    def _schedule_undeploy_mulescript(self, name, package, readme):            
+        ScheduledTask.queue_http_task('undeploy-mule-script',
+            self.flux.prepare('flux/1.0/workflow', 'task', None,
+            {'task': 'undeploy-mule-script', 
+             'name': name, 'package': package, 'readme': readme}))
+        
+    def _extract_zipfile(self, filepath):
+        import zipfile
+        from xml.dom import minidom
+        
+        with zipfile.ZipFile(filepath, 'r') as f:
+            # get all files in zip
+            comp_files = f.namelist()
+            for comp_file in comp_files:               
+                if comp_file.endswith('xml') and not '/' in comp_file:
+                    # open xml file and file "path" under http:listener
+                    cfp = f.open(comp_file, 'r')
+                    xmldoc = minidom.parse(cfp)
+                    httplistener = xmldoc.getElementsByTagName('http:listener')
+                    if httplistener:
+                        endpointurl = ENDPOINT_URL_PREFIX + httplistener[0].attributes['path'].value
+                    else:
+                        raise OperationError(token='mule-script-missing-httplistener')
+                if comp_file.endswith('pdf') and not '/' in comp_file:
+                    readmeurl = DOWNLOAD_URL_PREFIX + comp_file
+        return endpointurl, readmeurl   
+                
+    def task(self, request, response, subject, data):
+        import urllib2
+        import json
+
+        task = data['task']
+        if task == 'deploy-mule-script':
+            url = MULE_DEPLOY_URL
+            scriptName = data['name']
+            log('info', 'Deploying Mule script %s by endpoint URL = %s', scriptName, url)
+            request = urllib2.Request(url)
+            request.add_header('Content-Type', 'application/json')
+            conn = None            
+            try:
+                conn = urllib2.urlopen(request, json.dumps(data))
+                log('info', 'Response code of deploying mule script (name: %s) is %s', scriptName, conn.getcode())   
+            except urllib2.HTTPError as e:
+                log('info', 'Response code of deploying (name: %s) is %s', scriptName, e.code)
+                raise OperationError(token='deploy-mule-script-failed')
+            finally:
+                if conn != None:
+                    conn.close()
+        elif task == 'undeploy-mule-script':
+            url = MULE_UNDEPLOY_URL
+            scriptName = data['name']
+            log('info', 'UnDeploying Mule script %s by endpoint URL = %s', scriptName, url)
+            request = urllib2.Request(url)
+            request.add_header('Content-Type', 'application/json')
+            conn = None            
+            try:
+                conn = urllib2.urlopen(request, json.dumps(data))
+                log('info', 'Response code of undeploying mule script (name: %s) is %s', scriptName, conn.getcode())   
+            except urllib2.HTTPError as e:
+                log('info', 'Response code of undeploying (name: %s) is %s', scriptName, e.code)
+                raise OperationError(token='undeploy-mule-script-failed')
+            finally:
+                if conn != None:
+                    conn.close()                             

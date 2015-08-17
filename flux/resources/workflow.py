@@ -44,7 +44,8 @@ class Workflow(Resource):
 
     class create(Resource.create):
         fields = {
-            'specification': Text(nonempty=True)
+            'specification': Text(),
+            'filepath': Token(),
         }
         support_returning = True
 
@@ -77,3 +78,24 @@ class Workflow(Resource):
             'specification': Text(nonnull=True, min_length=1)
         }
         support_returning = True
+
+    class task:
+        endpoint = ('TASK', 'activity')
+        schema = Structure(
+            structure={
+                'deploy-mule-script': {
+                    'name': Text(nonempty=True),
+                    'filepath': Text(nonempty=True),
+                },
+                'undeploy-mule-script': {
+                    'name': Text(nonempty=True),
+                    'package': Text(nonempty=True),
+                    'readme': Text(),
+                },
+            },
+            polymorphic_on='task',
+            nonempty=True)
+        responses = {
+            OK: Response(),
+            INVALID: Response(Errors),
+        }
