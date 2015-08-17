@@ -41,6 +41,13 @@ class WorkflowController(ModelController):
         if len(policies) > 0:
             log('info', 'workflow_id %s cannot be deleted as it is associated with policies %s', subject.id, policies)
             raise OperationError(token='cannot-delete-inuse-workflow')
+        # check if workflow id has been executed
+        from flux.models import Run
+        session = self.schema.session
+        runCount = session.query(Run).filter_by(workflow_id=subject.id).count()
+        if (runCount > 0):
+            log('info', 'workflow_id %s cannot be deleted as it has been executed %s times', subject.id, runCount)
+            raise OperationError(token='cannot-delete-inuse-workflow')        
         super(WorkflowController, self).delete(request, response, subject, data)
         self._create_change_event(subject)
 
