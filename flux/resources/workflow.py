@@ -80,7 +80,7 @@ class Workflow(Resource):
         support_returning = True
 
     class task:
-        endpoint = ('TASK', 'activity')
+        endpoint = ('TASK', 'workflow')
         schema = Structure(
             structure={
                 'deploy-mule-script': {
