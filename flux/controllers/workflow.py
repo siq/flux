@@ -190,6 +190,8 @@ class WorkflowController(ModelController):
     def _extract_zipfile(self, filepath):
         import zipfile
         from xml.dom import minidom
+        endpointurl = ''
+        readmeurl = ''
         
         with zipfile.ZipFile(filepath, 'r') as f:
             # get all files in zip
