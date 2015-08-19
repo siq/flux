@@ -72,12 +72,12 @@ class WorkflowController(ModelController):
         super(WorkflowController, self).delete(request, response, subject, data)
         self._create_change_event(subject)
         if subject.type == 'mule':
-            packageurl = workflow.mule_extensions['packageurl']
+            packageurl = subject.mule_extensions['packageurl']
             package = packageurl.split('/')[-1] # get mule app name from packageurl
-            readmeurl = workflow.mule_extensions['readmeurl']            
+            readmeurl = subject.mule_extensions['readmeurl']            
             if readmeurl:
                 readme = readmeurl.split('/')[-1] # get mule readme name from readmeurl
-            self._schedule_undeploy_mulescript(workflow.name, package, readme)        
+            self._schedule_undeploy_mulescript(subject.name, package, readme)        
 
     def generate(self, request, response, subject, data):
         name = data['name']
