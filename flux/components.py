@@ -22,6 +22,7 @@ ENTITY_REGISTRATIONS = [
         specification=API.describe(['workflow']),
         cached_attributes={
             'is_service': {'type': 'boolean'},
+            'type': {'type': 'text'},
         },
     ),
     Registration(
@@ -46,7 +47,7 @@ ENTITY_REGISTRATIONS = [
             'completed': {'type': 'datetime'},
             'claimed': {'type': 'datetime'},
         }
-    ),                        
+    ),
 ]
 
 GENERATED_BY = Intent(

@@ -34,7 +34,7 @@ class Workflow(Resource):
         specification = Text(deferred=True)
         form = Structure(FormStructure, deferred=True, readonly=True)
         modified = DateTime(utc=True, readonly=True)
-        type = Enumeration('yaml mule', default='yaml')
+        type = Enumeration('yaml mule', default='yaml', operators='equal in')
         policies = Sequence(Text(), deferred=True, readonly=True)
         mule_extensions = Structure({
             'packageurl': Text(nonempty=True),
