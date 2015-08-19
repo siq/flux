@@ -71,7 +71,7 @@ class WorkflowController(ModelController):
             raise OperationError(token='cannot-delete-inuse-workflow')        
         super(WorkflowController, self).delete(request, response, subject, data)
         self._create_change_event(subject)
-        if workflow.type == 'mule':
+        if subject.type == 'mule':
             packageurl = workflow.mule_extensions['packageurl']
             package = packageurl.split('/')[-1] # get mule app name from packageurl
             readmeurl = workflow.mule_extensions['readmeurl']            
@@ -203,7 +203,10 @@ class WorkflowController(ModelController):
                     xmldoc = minidom.parse(cfp)
                     httplistener = xmldoc.getElementsByTagName('http:listener')
                     if httplistener:
-                        endpointurl = ENDPOINT_URL_PREFIX + httplistener[0].attributes['path'].value
+                        urlpath = httplistener[0].attributes['path'].value
+                        if urlpath.startswith('/'):
+                        	urlpath = urlpath[1:] # remove "/" from urlpath
+                        endpointurl = ENDPOINT_URL_PREFIX + urlpath
                     else:
                         raise OperationError(token='mule-script-missing-httplistener')
                 if comp_file.endswith('pdf') and not '/' in comp_file:
