@@ -25,6 +25,7 @@ class WorkflowController(ModelController):
     schema = SchemaDependency('flux')
     uploads = Dependency(UploadManager)
     flux = MeshDependency('flux')
+    docket_entity = MeshDependency('docket.entity')
 
     @support_returning
     def create(self, request, response, subject, data):
@@ -57,8 +58,10 @@ class WorkflowController(ModelController):
         return subject
 
     def delete(self, request, response, subject, data):
+        workflowEntity = self.docket_entity.bind('docket.entity/1.0/flux/1.0/workflow')
+        workflow = workflowEntity.get(subject.id, include=['policies']) 
         # check if workflow id has been associated with any policy
-        policies = subject.policies
+        policies = workflow.policies
         if len(policies) > 0:
             log('info', 'workflow_id %s cannot be deleted as it is associated with policies %s', subject.id, policies)
             raise OperationError(token='cannot-delete-inuse-workflow')
@@ -68,16 +71,19 @@ class WorkflowController(ModelController):
         runCount = session.query(Run).filter_by(workflow_id=subject.id).count()
         if (runCount > 0):
             log('info', 'workflow_id %s cannot be deleted as it has been executed %s times', subject.id, runCount)
-            raise OperationError(token='cannot-delete-inuse-workflow')        
+            raise OperationError(token='cannot-delete-inuse-workflow')
+                                                
         super(WorkflowController, self).delete(request, response, subject, data)
         self._create_change_event(subject)
+        
         if subject.type == 'mule':
-            packageurl = subject.mule_extensions['packageurl']
+            # retrieve mule_extensions info
+            packageurl = workflow.mule_extensions['packageurl']
             package = packageurl.split('/')[-1] # get mule app name from packageurl
-            readmeurl = subject.mule_extensions['readmeurl']            
+            readmeurl = workflow.mule_extensions['readmeurl']            
             if readmeurl:
-                readme = readmeurl.split('/')[-1] # get mule readme name from readmeurl
-            self._schedule_undeploy_mulescript(subject.name, package, readme)        
+                readme = readmeurl.split('/')[-1] # get mule readme name from readmeurl        
+            self._schedule_undeploy_mulescript(workflow.name, package, readme)        
 
     def generate(self, request, response, subject, data):
         name = data['name']
