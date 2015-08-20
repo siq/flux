@@ -80,7 +80,8 @@ class WorkflowController(ModelController):
             # retrieve mule_extensions info
             packageurl = workflow.mule_extensions['packageurl']
             package = packageurl.split('/')[-1] # get mule app name from packageurl
-            readmeurl = workflow.mule_extensions['readmeurl']            
+            readmeurl = workflow.mule_extensions['readmeurl']
+            readme = ''            
             if readmeurl:
                 readme = readmeurl.split('/')[-1] # get mule readme name from readmeurl        
             self._schedule_undeploy_mulescript(workflow.name, package, readme)        
