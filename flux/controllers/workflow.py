@@ -42,7 +42,7 @@ class WorkflowController(ModelController):
                     try:
                         filepath = self.uploads.find(data.pop('filepath'))
                     except ValueError:
-                        raise OperationError(token='invalid-mule-script-upload')
+                        raise OperationError(token='mule-script-invalid-upload')
                 endpointurl, readmeurl = self._extract_zipfile(filepath)
                 data['mule_extensions']['endpointurl'] = endpointurl
                 data['mule_extensions']['readmeurl'] = readmeurl
@@ -217,12 +217,12 @@ class WorkflowController(ModelController):
                     if httplistener:
                         urlpath = httplistener[0].attributes['path'].value
                         if not urlpath:
-                            raise OperationError(token='mule-script-missing-url')                        
+                            raise OperationError(token='mule-script-missing-endpoint')                        
                         if urlpath.startswith('/'):
                         	urlpath = urlpath[1:] # remove "/" from urlpath
                         endpointurl = ENDPOINT_URL_PREFIX + urlpath
                     else:
-                        raise OperationError(token='mule-script-missing-httplistener')
+                        raise OperationError(token='mule-script-missing-endpoint')
                 if comp_file.endswith('pdf') and not '/' in comp_file:
                     readmeurl = ExternalUrl.create(path='/download/mule-flows/%s' % comp_file).url
         return endpointurl, readmeurl   
@@ -244,7 +244,7 @@ class WorkflowController(ModelController):
                 log('info', 'Response code of deploying mule script (name: %s) is %s', scriptName, conn.getcode())   
             except urllib2.HTTPError as e:
                 log('info', 'Response code of deploying (name: %s) is %s', scriptName, e.code)
-                raise OperationError(token='deploy-mule-script-failed')
+                raise OperationError(token='mule-script-deploy-failed')
             finally:
                 if conn != None:
                     conn.close()
@@ -260,7 +260,7 @@ class WorkflowController(ModelController):
                 log('info', 'Response code of undeploying mule script (name: %s) is %s', scriptName, conn.getcode())   
             except urllib2.HTTPError as e:
                 log('info', 'Response code of undeploying (name: %s) is %s', scriptName, e.code)
-                raise OperationError(token='undeploy-mule-script-failed')
+                raise OperationError(token='mule-script-undeploy-failed')
             finally:
                 if conn != None:
                     conn.close()                             

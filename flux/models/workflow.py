@@ -82,10 +82,19 @@ class Workflow(Model):
         subject = cls(modified=current_timestamp(), **attrs)
         if attrs['type'] == 'mule':
             if not mule_extensions['packageurl']:
-                raise OperationError(token='invalid-mule-packageurl')
+                raise OperationError(token='mule-script-missing-packageurl')
             elif not mule_extensions['endpointurl']:
-                raise OperationError(token='invalid-mule-endpointurl')
+                raise OperationError(token='mule-script-missing-endpointurl')
             else:
+                # check uniqueness of packageurl/endpointurl/readmeurl
+                mulescripts = session.query(Workflow).filter_by(type='mule')
+                for mulescript in mulescripts:
+                    if mulescript.mule_extensions.packageurl == mule_extensions['packageurl']:
+                        raise OperationError(token='mule-script-duplicate-packageurl')
+                    if mulescript.mule_extensions.endpointurl == mule_extensions['endpointurl']:
+                        raise OperationError(token='mule-script-duplicate-endpointurl')
+                    if mule_extensions['readmeurl'] and mule_extensions['readmeurl'].strip() and mulescript.mule_extensions.readmeurl == mule_extensions['readmeurl']:
+                        raise OperationError(token='mule-script-duplicate-readmeurl')
                 subject.mule_extensions = WorkflowMule(**mule_extensions)
         subject.validate_specification()
         session.add(subject)
