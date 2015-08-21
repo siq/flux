@@ -216,6 +216,8 @@ class WorkflowController(ModelController):
                     httplistener = xmldoc.getElementsByTagName('http:listener')
                     if httplistener:
                         urlpath = httplistener[0].attributes['path'].value
+                        if not urlpath:
+                            raise OperationError(token='mule-script-missing-url')                        
                         if urlpath.startswith('/'):
                         	urlpath = urlpath[1:] # remove "/" from urlpath
                         endpointurl = ENDPOINT_URL_PREFIX + urlpath
