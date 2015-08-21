@@ -37,13 +37,13 @@ class WorkflowController(ModelController):
                 if not data['filepath']:
                     raise OperationError(token='mule-script-upload-required')
                 else:
-                    downloadurlprefix = ExternalUrl.create(path='/download/mule-flows/').url
-                    data['mule_extensions']['packageurl'] =  downloadurlprefix + data['filepath']                
+                    shortFilePath = data['filepath'][37:] # assume the uuid_ has fixed length of 37, e.g. 25dc766a-7eb6-4ed6-abc6-2f57fbfbc294_helloworld.zip
+                    data['mule_extensions']['packageurl'] = ExternalUrl.create(path='/download/mule-flows/%s' % shortFilePath).url              
                     try:
                         filepath = self.uploads.find(data.pop('filepath'))
                     except ValueError:
                         raise OperationError(token='invalid-mule-script-upload')
-                endpointurl, readmeurl = self._extract_zipfile(downloadurlprefix, filepath)
+                endpointurl, readmeurl = self._extract_zipfile(filepath)
                 data['mule_extensions']['endpointurl'] = endpointurl
                 data['mule_extensions']['readmeurl'] = readmeurl
         
@@ -199,7 +199,7 @@ class WorkflowController(ModelController):
             {'task': 'undeploy-mule-script', 
              'name': name, 'package': package, 'readme': readme}))
         
-    def _extract_zipfile(self, downloadurlprefix, filepath):
+    def _extract_zipfile(self, filepath):
         import zipfile
         from xml.dom import minidom
         endpointurl = ''
@@ -222,7 +222,7 @@ class WorkflowController(ModelController):
                     else:
                         raise OperationError(token='mule-script-missing-httplistener')
                 if comp_file.endswith('pdf') and not '/' in comp_file:
-                    readmeurl = downloadurlprefix + comp_file
+                    readmeurl = ExternalUrl.create(path='/download/mule-flows/%s' % comp_file).url
         return endpointurl, readmeurl   
                 
     def task(self, request, response, subject, data):
