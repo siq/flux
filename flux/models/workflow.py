@@ -131,7 +131,7 @@ class WorkflowMule(Model):
     workflow_id = ForeignKey('workflow.id', nullable=False, ondelete='CASCADE')
     packageurl = Text(unique=True, nullable=False)
     endpointurl = Text(unique=True, nullable=False)
-    readmeurl = Text(unique=True)
+    readmeurl = Text()
     
 class DocketDependency(Unit):
     docket_entity = MeshDependency('docket.entity')
