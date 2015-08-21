@@ -12,6 +12,4 @@ MULE_DEPLOY_URL = 'http://localhost:8082/deploy'
 
 MULE_UNDEPLOY_URL = 'http://localhost:8082/undeploy'
 
-DOWNLOAD_URL_PREFIX = 'http://localhost/download/mule-flows/'
-
 ENDPOINT_URL_PREFIX = 'http://localhost:8081/'

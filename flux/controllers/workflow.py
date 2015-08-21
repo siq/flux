@@ -6,7 +6,7 @@ from spire.schema import SchemaDependency, IntegrityError
 from spire.support.logs import LogHelper
 from spire.wsgi.upload import UploadManager
 
-from flux.bindings import platoon
+from flux.bindings import truss, platoon
 from flux.constants import *
 from flux.models import *
 from flux.resources import Workflow as WorkflowResource
@@ -15,6 +15,7 @@ from flux.engine.workflow import Workflow as WorkflowEngine
 log = LogHelper('flux')
 Event = bind(platoon, 'platoon/1.0/event')
 ScheduledTask = bind(platoon, 'platoon/1.0/scheduledtask')
+ExternalUrl = bind(truss, 'truss/1.0/externalurl')
 
 class WorkflowController(ModelController):
     resource = WorkflowResource
@@ -36,12 +37,13 @@ class WorkflowController(ModelController):
                 if not data['filepath']:
                     raise OperationError(token='mule-script-upload-required')
                 else:
-                    data['mule_extensions']['packageurl'] = DOWNLOAD_URL_PREFIX + data['filepath']                
+                    downloadurlprefix = ExternalUrl.create(path='/download/mule-flows/').url
+                    data['mule_extensions']['packageurl'] =  downloadurlprefix + data['filepath']                
                     try:
                         filepath = self.uploads.find(data.pop('filepath'))
                     except ValueError:
                         raise OperationError(token='invalid-mule-script-upload')
-                endpointurl, readmeurl = self._extract_zipfile(filepath)
+                endpointurl, readmeurl = self._extract_zipfile(downloadurlprefix, filepath)
                 data['mule_extensions']['endpointurl'] = endpointurl
                 data['mule_extensions']['readmeurl'] = readmeurl
         
@@ -197,7 +199,7 @@ class WorkflowController(ModelController):
             {'task': 'undeploy-mule-script', 
              'name': name, 'package': package, 'readme': readme}))
         
-    def _extract_zipfile(self, filepath):
+    def _extract_zipfile(self, downloadurlprefix, filepath):
         import zipfile
         from xml.dom import minidom
         endpointurl = ''
@@ -220,7 +222,7 @@ class WorkflowController(ModelController):
                     else:
                         raise OperationError(token='mule-script-missing-httplistener')
                 if comp_file.endswith('pdf') and not '/' in comp_file:
-                    readmeurl = DOWNLOAD_URL_PREFIX + comp_file
+                    readmeurl = downloadurlprefix + comp_file
         return endpointurl, readmeurl   
                 
     def task(self, request, response, subject, data):
