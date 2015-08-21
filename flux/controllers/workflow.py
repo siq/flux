@@ -135,8 +135,11 @@ class WorkflowController(ModelController):
         if not data:
             return subject
         
-        if subject.type == 'mule' and 'mule_extensions' in data:
-            data.pop('mule_extensions') # no update of mule extensions is allowed
+        if subject.type == 'mule':
+            data['type'] = subject.type
+            data['is_service'] = subject.is_service
+            if 'mule_extensions' in data:
+                data.pop('mule_extensions') # no update of mule extensions is allowed
         
         session = self.schema.session
         changed = subject.update(session, **data)
