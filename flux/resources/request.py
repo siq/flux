@@ -71,7 +71,7 @@ class Request(Resource):
             'status': Enumeration('prepared pending', nonnull=True),
             'message': Structure({
                 'author': Token(nonnull=True),
-                'message': Text(min=1, nonnull=True),
+                'message': Text(),
             }),
         }
 
@@ -140,7 +140,7 @@ class Request(Resource):
                             'Request attribute `status` to `declined`'
                         )
                     ),
-                    'message': Text(min=1, nonnull=True),
+                    'message': Text(),
                 }, description=(
                     'A message to append to request. Required when setting '
                     'Request attribute `status` to `declined`'
