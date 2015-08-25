@@ -215,17 +215,18 @@ class WorkflowController(ModelController):
                     xmldoc = minidom.parse(cfp)
                     httplistener = xmldoc.getElementsByTagName('http:listener')
                     if httplistener:
-                        urlpath = httplistener[0].attributes['path'].value
-                        if not urlpath:
-                            raise OperationError(token='mule-script-missing-endpoint')                        
-                        if urlpath.startswith('/'):
-                        	urlpath = urlpath[1:] # remove "/" from urlpath
-                        endpointurl = ENDPOINT_URL_PREFIX + urlpath
+                        urlpath = httplistener[0].getAttribute('path')
+                        if urlpath:
+                            if urlpath.startswith('/'):
+                                urlpath = urlpath[1:] # remove "/" from urlpath
+                            endpointurl = MULE_ENDPOINT_URL_PREFIX + urlpath
+                        else:
+                            raise OperationError(token='mule-script-missing-http-path')                                
                     else:
                         raise OperationError(token='mule-script-missing-endpoint')
-                if comp_file.endswith('pdf') and not '/' in comp_file:
+                if comp_file.endswith(MULE_README_EXT) and not '/' in comp_file:
                     readmeurl = ExternalUrl.create(path='/download/mule-flows/%s' % comp_file).url
-        return endpointurl, readmeurl   
+        return endpointurl, readmeurl
                 
     def task(self, request, response, subject, data):
         import urllib2

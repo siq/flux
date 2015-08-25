@@ -99,3 +99,17 @@ class Workflow(Resource):
             OK: Response(),
             INVALID: Response(Errors),
         }
+
+class WorkflowMule(Resource):
+    """A workflow mule extensions."""
+
+    name = 'workflow_mule'
+    version = 1
+    requests = 'query'
+
+    class schema:
+        id = UUID(nonnull=True, oncreate=True, operators='equal')
+        workflow_id = UUID(nonnull=True, operators='equal')
+        packageurl = Text(nonempty=True, operators='equal icontains')
+        endpointurl = Text(nonempty=True, operators='equal icontains')
+        readmeurl = Text(operators='equal icontains')

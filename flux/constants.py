@@ -12,4 +12,6 @@ MULE_DEPLOY_URL = 'http://localhost:8082/deploy'
 
 MULE_UNDEPLOY_URL = 'http://localhost:8082/undeploy'
 
-ENDPOINT_URL_PREFIX = 'http://localhost:8081/'
+MULE_ENDPOINT_URL_PREFIX = 'http://localhost:8081/'
+
+MULE_README_EXT = 'pdf'
