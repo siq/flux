@@ -60,23 +60,28 @@ class WorkflowController(ModelController):
         return subject
 
     def delete(self, request, response, subject, data):
+        workflowName = subject.name
         # check if workflow id has been associated with any policy
         policies = subject.policies
         if len(policies):
-            log('info', 'workflow_id %s cannot be deleted as it is associated with policies %s', subject.id, policies)
+            log('info', 'workflow %s (%s) cannot be deleted as it is associated with policies %s', subject.id, workflowName, policies)
             raise OperationError(token='cannot-delete-inuse-workflow')
         
-        # check if workflow id has been executed
+        # check if the run has uncompleted instances
         from flux.models import Run
         session = self.schema.session
-        runCount = session.query(Run).filter_by(workflow_id=subject.id).count()
-        if runCount:
-            log('info', 'workflow_id %s cannot be deleted as it has been executed %s times', subject.id, runCount)
-            raise OperationError(token='cannot-delete-inuse-workflow')
+        if session.query(Run).filter(Run.workflow_id==subject.id, Run.status.in_(ACTIVE_RUN_STATUSES.split(' '))).count():
+            log('info', 'workflow %s (%s) cannot be deleted as it has run with uncompleted status of either %s', subject.id, workflowName, ACTIVE_RUN_STATUSES)
+            raise OperationError(token='cannot-delete-uncompleted-workflow')
+        # delete the completed runs
+        for run in session.query(Run).filter_by(workflow_id=subject.id).all():
+            runEntity = self.docket_entity.bind('docket.entity/1.0/flux/1.0/run')
+            runInstance = runEntity.get(run.id)
+            runInstance.destroy()
 
         # retrieve mule extensions for later use
-        mule_extensions = subject.mule_extensions.extract_dict('packageurl endpointurl readmeurl')
-        workflowName = subject.name
+        if subject.type == 'mule':
+            mule_extensions = subject.mule_extensions.extract_dict('packageurl endpointurl readmeurl')
                                                 
         super(WorkflowController, self).delete(request, response, subject, data)
         self._create_change_event(subject)
