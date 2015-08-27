@@ -96,6 +96,7 @@ class TestWorkflow(BaseTestCase):
             'designation': None,
             'specification': unicode(self._workflow_spec),
             'is_service': False,
+            'type': 'yaml',
         }
 
         resp = client.execute(
@@ -129,6 +130,7 @@ class TestWorkflow(BaseTestCase):
             'designation': None,
             'is_service': False,
             'specification': unicode(self._workflow_spec),
+            'type': 'yaml',
         }
 
         resp = client.execute(
@@ -199,6 +201,7 @@ class TestWorkflow(BaseTestCase):
             'designation': None,
             'is_service': False,
             'specification': unicode(self._workflow_spec),
+            'type': 'yaml',
         }
 
         resp = client.execute(
@@ -216,26 +219,26 @@ class TestWorkflow(BaseTestCase):
 
     def test_update_workflow(self, client):
         """Tests updating of workflow resource"""
-        resp1 = self._setup_workflow(client, 'test update workflow')
-        self.assertEquals(resp1.status, 'OK')
-        workflow_id = resp1.content['id']
+        resp = self._setup_workflow(client, 'test update workflow')
+        self.assertEquals(resp.status, 'OK')
+        workflow_id = resp.content['id']
 
-        resp2 = client.execute(
+        resp = client.execute(
                 'workflow', 'get', workflow_id,
                 {'include': ['specification', 'form']})
-        self.assertEquals(resp2.status, 'OK')
-        original_vals = {k: resp2.content.pop(k) for k in ('name', 'modified',)}
+        self.assertEquals(resp.status, 'OK')
+        original_vals = {k: resp.content.pop(k) for k in ('name', 'modified',)}
 
         sleep(3)
         new_name = 'updated test update workflow'
-        resp3 = client.execute('workflow', 'update', workflow_id, {'name': new_name})
-        self.assertEquals(resp3.status, 'OK')
+        resp = client.execute('workflow', 'update', workflow_id, {'name': new_name})
+        self.assertEquals(resp.status, 'OK')
 
-        resp4 = client.execute(
+        resp = client.execute(
                 'workflow', 'get', workflow_id,
                 {'include': ['specification', 'form']})
-        self.assertEquals(resp4.status, 'OK')
-        result = resp4.content
+        self.assertEquals(resp.status, 'OK')
+        result = resp.content
         for k in ('name', 'modified'):
             self.assertNotEquals(original_vals[k], result[k])
 
@@ -243,27 +246,27 @@ class TestWorkflow(BaseTestCase):
 
     def test_delete_workflow(self, client):
         """Tests deletion of workflow resource"""
-        resp1 = self._setup_workflow(client, 'test delete workflow')
-        self.assertEquals(resp1.status, 'OK')
-        workflow_id = resp1.content['id']
+        resp = self._setup_workflow(client, 'test delete workflow')
+        self.assertEquals(resp.status, 'OK')
+        workflow_id = resp.content['id']
 
-        resp2 = client.execute(
+        resp = client.execute(
                 'workflow', 'get', workflow_id,
                 {'include': ['specification', 'form']})
-        self.assertEquals(resp2.status, 'OK')
-        result = resp2.content
+        self.assertEquals(resp.status, 'OK')
+        result = resp.content
         self.assertEquals(result['id'], workflow_id)
 
-        resp2 = client.execute('workflow', 'delete', workflow_id)
-        self.assertEquals(resp2.status, 'OK')
+        resp = client.execute('workflow', 'delete', workflow_id)
+        self.assertEquals(resp.status, 'OK')
 
         with self.assertRaises(GoneError):
             client.execute('workflow', 'get', workflow_id)
 
     def test_duplicate_name_workflow1(self, client):
         """Tests creating a workflow with an existing workflow name"""
-        resp1 = self._setup_workflow(client, 'test duplicate name workflow 1')
-        self.assertEquals(resp1.status, 'OK')
+        resp = self._setup_workflow(client, 'test duplicate name workflow 1')
+        self.assertEquals(resp.status, 'OK')
 
         with self.assertRaises(InvalidError):
             self._setup_workflow(client, 'test duplicate name workflow 1')
@@ -271,25 +274,25 @@ class TestWorkflow(BaseTestCase):
     def test_duplicate_name_workflow2(self, client):
         """Tests updating a workflow with an existing workflow name"""
         duplicate_name = 'test duplicate name workflow 2'
-        resp1 = self._setup_workflow(client, duplicate_name)
-        self.assertEquals(resp1.status, 'OK')
+        resp = self._setup_workflow(client, duplicate_name)
+        self.assertEquals(resp.status, 'OK')
 
-        resp2 = self._setup_workflow(client, 'test duplicate name workflow 2 a')
-        self.assertEquals(resp1.status, 'OK')
-        workflow_id = resp2.content['id']
+        resp = self._setup_workflow(client, 'test duplicate name workflow 2 a')
+        self.assertEquals(resp.status, 'OK')
+        workflow_id = resp.content['id']
 
         with self.assertRaises(InvalidError):
             client.execute('workflow', 'update', workflow_id, {'name': duplicate_name})
 
     def test_duplicate_name_workflow3(self, client):
         """Tests against false positive when updating a workflow without name change."""
-        resp1 = self._setup_workflow(client, 'test duplicate name workflow 3')
-        self.assertEquals(resp1.status, 'OK')
-        workflow_id = resp1.content['id']
+        resp = self._setup_workflow(client, 'test duplicate name workflow 3')
+        self.assertEquals(resp.status, 'OK')
+        workflow_id = resp.content['id']
 
-        resp2 = client.execute('workflow', 'update', workflow_id,
+        resp = client.execute('workflow', 'update', workflow_id,
                 {'name': 'test duplicate name workflow 3'})
-        self.assertEquals(resp2.status, 'OK')
+        self.assertEquals(resp.status, 'OK')
 
 
 class TestWorkflowGenerate(BaseTestCase):
@@ -323,7 +326,7 @@ class TestWorkflowGenerate(BaseTestCase):
                 '    operation: flux:test-operation',
                 '    parameters:',
                 '      foo: bar',
-            ])
+            ]),
         }
         self.assertEquals(expected, result)
 
@@ -374,6 +377,6 @@ class TestWorkflowGenerate(BaseTestCase):
                 '    operation: flux:test-operation',
                 '    parameters:',
                 '      foo: bar',
-            ])
+            ]),
         }
         self.assertEquals(expected, result)
