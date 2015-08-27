@@ -60,33 +60,36 @@ class WorkflowController(ModelController):
         return subject
 
     def delete(self, request, response, subject, data):
-        workflowEntity = self.docket_entity.bind('docket.entity/1.0/flux/1.0/workflow')
-        workflow = workflowEntity.get(subject.id, include=['policies']) 
         # check if workflow id has been associated with any policy
-        policies = workflow.policies
-        if len(policies) > 0:
+        policies = subject.policies
+        if len(policies):
             log('info', 'workflow_id %s cannot be deleted as it is associated with policies %s', subject.id, policies)
             raise OperationError(token='cannot-delete-inuse-workflow')
+        
         # check if workflow id has been executed
         from flux.models import Run
         session = self.schema.session
         runCount = session.query(Run).filter_by(workflow_id=subject.id).count()
-        if (runCount > 0):
+        if runCount:
             log('info', 'workflow_id %s cannot be deleted as it has been executed %s times', subject.id, runCount)
             raise OperationError(token='cannot-delete-inuse-workflow')
+
+        # retrieve mule extensions for later use
+        mule_extensions = subject.mule_extensions.extract_dict('packageurl endpointurl readmeurl')
+        workflowName = subject.name
                                                 
         super(WorkflowController, self).delete(request, response, subject, data)
         self._create_change_event(subject)
         
         if subject.type == 'mule':
             # retrieve mule_extensions info
-            packageurl = workflow.mule_extensions['packageurl']
+            packageurl = mule_extensions['packageurl']
             package = packageurl.split('/')[-1] # get mule app name from packageurl
-            readmeurl = workflow.mule_extensions['readmeurl']
+            readmeurl = mule_extensions['readmeurl']
             readme = ''            
             if readmeurl:
                 readme = readmeurl.split('/')[-1] # get mule readme name from readmeurl        
-            self._schedule_undeploy_mulescript(workflow.name, package, readme)        
+            self._schedule_undeploy_mulescript(workflowName, package, readme)        
 
     def generate(self, request, response, subject, data):
         name = data['name']
