@@ -27,7 +27,7 @@ class Workflow(Resource):
     requests = 'create delete get load put query update'
 
     class schema:
-        id = UUID(nonnull=True, oncreate=True, operators='equal')
+        id = UUID(nonnull=True, oncreate=True, operators='equal in')
         name = Text(nonempty=True, operators='equal icontains')
         designation = Token(operators='equal')
         is_service = Boolean(default=False, operators='equal')
