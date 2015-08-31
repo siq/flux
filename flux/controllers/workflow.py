@@ -145,11 +145,11 @@ class WorkflowController(ModelController):
         if not data:
             return subject
 
-        if not 'type' in data:
-            data['type'] = subject.type
-        if not 'is_service' in data:
-            data['is_service'] = subject.is_service
         if subject.type == 'mule':
+            if 'type' in data:
+                data.pop('type') # no update of workflow type
+            if 'is_service' in data:
+                data.pop('is_service') # no update of workflow is_service                
             if 'mule_extensions' in data:
                 data.pop('mule_extensions') # no update of mule extensions is allowed
         
