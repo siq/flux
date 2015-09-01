@@ -71,8 +71,7 @@ class Workflow(Model):
             if 'workflow' in policy.attachments['parameters']:
                 workflow_id = policy.attachments['parameters']['workflow']
                 if self.id == workflow_id:
-                    policyList.append(policy.name)
-        log('info', 'workflow %s is used by policy %s', self.name, policyList)                    
+                    policyList.append(policy.name)                   
         return policyList
 
     @classmethod
