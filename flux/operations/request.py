@@ -60,6 +60,16 @@ class CreateRequest(Operation):
                     }, nonempty=True)),
                 }),
             },
+            'declined': {
+                'outcome': 'success',
+                'schema': Structure({
+                    'request': Surrogate(nonempty=True),
+                    'products': Map(key=Token(nonempty=True), value=Structure({
+                        'title': Text(),
+                        'product': Surrogate(nonempty=True),
+                    }, nonempty=True)),
+                }),
+            },
             'failed': {
                 'outcome': 'failure',
                 'schema': Structure({
@@ -82,8 +92,9 @@ class CreateRequest(Operation):
 
         values = {'request': surrogate.construct('flux.surrogates.request', subject)}
 
-        if subject.status == 'completed':
-            outcome = 'completed'
+        status = subject.status
+        if status in ('completed', 'declined'):
+            outcome = status
             values['products'] = products
         else:
             outcome = 'failed'
