@@ -79,27 +79,6 @@ class Workflow(Resource):
         }
         support_returning = True
 
-    class task:
-        endpoint = ('TASK', 'workflow')
-        schema = Structure(
-            structure={
-                'deploy-mule-script': {
-                    'name': Text(nonempty=True),
-                    'filepath': Text(nonempty=True),
-                },
-                'undeploy-mule-script': {
-                    'name': Text(nonempty=True),
-                    'package': Text(nonempty=True),
-                    'readme': Text(),
-                },
-            },
-            polymorphic_on='task',
-            nonempty=True)
-        responses = {
-            OK: Response(),
-            INVALID: Response(Errors),
-        }
-
 class WorkflowMule(Resource):
     """A workflow mule extensions."""
 

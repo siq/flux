@@ -12,9 +12,11 @@ from flux.models import *
 from flux.resources import Workflow as WorkflowResource
 from flux.engine.workflow import Workflow as WorkflowEngine
 
+import urllib2
+import json
+
 log = LogHelper('flux')
 Event = bind(platoon, 'platoon/1.0/event')
-ScheduledTask = bind(platoon, 'platoon/1.0/scheduledtask')
 ExternalUrl = bind(truss, 'truss/1.0/externalurl')
 
 class WorkflowController(ModelController):
@@ -46,6 +48,7 @@ class WorkflowController(ModelController):
                 endpointurl, readmeurl = self._extract_zipfile(filepath)
                 data['mule_extensions']['endpointurl'] = endpointurl
                 data['mule_extensions']['readmeurl'] = readmeurl
+                self._deploy_mulescript(data['name'], filepath)
         
         session = self.schema.session
         subject = self.model.create(session, **data)
@@ -55,8 +58,6 @@ class WorkflowController(ModelController):
         except IntegrityError:
             raise OperationError(token='duplicate-workflow-name')
 
-        if 'type' in data and data['type'] == 'mule' and filepath:
-            self._schedule_deploy_mulescript(data['name'], filepath)
         return subject
 
     def delete(self, request, response, subject, data):
@@ -94,7 +95,7 @@ class WorkflowController(ModelController):
             readme = ''            
             if readmeurl:
                 readme = readmeurl.split('/')[-1] # get mule readme name from readmeurl        
-            self._schedule_undeploy_mulescript(workflowName, package, readme)        
+            self._undeploy_mulescript(workflowName, package, readme)        
 
     def generate(self, request, response, subject, data):
         name = data['name']
@@ -197,18 +198,39 @@ class WorkflowController(ModelController):
         except Exception:
             log('exception', 'failed to fire workflow:changed event')
 
-    def _schedule_deploy_mulescript(self, name, filepath):
-        ScheduledTask.queue_http_task('deploy-mule-script',
-            self.flux.prepare('flux/1.0/workflow', 'task', None,
-            {'task': 'deploy-mule-script', 
-             'name': name, 'filepath': filepath}))
+    def _deploy_mulescript(self, name, filepath):
+        url = MULE_DEPLOY_URL
+        scriptName = name
+        log('info', 'Deploying Mule script %s by endpoint URL = %s', scriptName, url)
+        request = urllib2.Request(url)
+        request.add_header('Content-Type', 'application/json')
+        conn = None            
+        try:
+            conn = urllib2.urlopen(request, json.dumps({'name': name, 'filepath': filepath}))
+            log('info', 'Response code of deploying mule script (name: %s) is %s', scriptName, conn.getcode())   
+        except urllib2.HTTPError as e:
+            log('info', 'HTTPError Response code of deploying (name: %s) is %s', scriptName, e.code)
+            raise OperationError(token='mule-script-deploy-failed')
+        finally:
+            if conn != None:
+                conn.close()
         
-    def _schedule_undeploy_mulescript(self, name, package, readme):            
-        ScheduledTask.queue_http_task('undeploy-mule-script',
-            self.flux.prepare('flux/1.0/workflow', 'task', None,
-            {'task': 'undeploy-mule-script', 
-             'name': name, 'package': package, 'readme': readme}))
-        
+    def _undeploy_mulescript(self, name, package, readme):            
+        url = MULE_UNDEPLOY_URL
+        scriptName = name
+        log('info', 'UnDeploying Mule script %s by endpoint URL = %s', scriptName, url)
+        request = urllib2.Request(url)
+        request.add_header('Content-Type', 'application/json')
+        conn = None            
+        try:
+            conn = urllib2.urlopen(request, json.dumps({'name': name, 'package': package, 'readme': readme}))
+            log('info', 'Response code of undeploying mule script (name: %s) is %s', scriptName, conn.getcode())   
+        except urllib2.HTTPError as e:
+            log('exception', 'HTTPError Response code of undeploying (name: %s) is %s, failed to undeploy mule script', scriptName, e.code)
+        finally:
+            if conn != None:
+                conn.close()
+                            
     def _extract_zipfile(self, filepath):
         import zipfile
         from xml.dom import minidom
@@ -237,41 +259,3 @@ class WorkflowController(ModelController):
                 if comp_file.endswith(MULE_README_EXT) and not '/' in comp_file:
                     readmeurl = ExternalUrl.create(path='/download/mule-flows/%s' % comp_file).url
         return endpointurl, readmeurl
-                
-    def task(self, request, response, subject, data):
-        import urllib2
-        import json
-
-        task = data['task']
-        if task == 'deploy-mule-script':
-            url = MULE_DEPLOY_URL
-            scriptName = data['name']
-            log('info', 'Deploying Mule script %s by endpoint URL = %s', scriptName, url)
-            request = urllib2.Request(url)
-            request.add_header('Content-Type', 'application/json')
-            conn = None            
-            try:
-                conn = urllib2.urlopen(request, json.dumps(data))
-                log('info', 'Response code of deploying mule script (name: %s) is %s', scriptName, conn.getcode())   
-            except urllib2.HTTPError as e:
-                log('info', 'Response code of deploying (name: %s) is %s', scriptName, e.code)
-                raise OperationError(token='mule-script-deploy-failed')
-            finally:
-                if conn != None:
-                    conn.close()
-        elif task == 'undeploy-mule-script':
-            url = MULE_UNDEPLOY_URL
-            scriptName = data['name']
-            log('info', 'UnDeploying Mule script %s by endpoint URL = %s', scriptName, url)
-            request = urllib2.Request(url)
-            request.add_header('Content-Type', 'application/json')
-            conn = None            
-            try:
-                conn = urllib2.urlopen(request, json.dumps(data))
-                log('info', 'Response code of undeploying mule script (name: %s) is %s', scriptName, conn.getcode())   
-            except urllib2.HTTPError as e:
-                log('info', 'Response code of undeploying (name: %s) is %s', scriptName, e.code)
-                raise OperationError(token='mule-script-undeploy-failed')
-            finally:
-                if conn != None:
-                    conn.close()                             
