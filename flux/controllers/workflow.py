@@ -237,25 +237,29 @@ class WorkflowController(ModelController):
         endpointurl = ''
         readmeurl = ''
         
-        with zipfile.ZipFile(filepath, 'r') as f:
-            # get all files in zip
-            comp_files = f.namelist()
-            for comp_file in comp_files:               
-                if comp_file.endswith('xml') and not '/' in comp_file:
-                    # open xml file and file "path" under http:listener
-                    cfp = f.open(comp_file, 'r')
-                    xmldoc = minidom.parse(cfp)
-                    httplistener = xmldoc.getElementsByTagName('http:listener')
-                    if httplistener:
-                        urlpath = httplistener[0].getAttribute('path')
-                        if urlpath:
-                            if urlpath.startswith('/'):
-                                urlpath = urlpath[1:] # remove "/" from urlpath
-                            endpointurl = MULE_ENDPOINT_URL_PREFIX + urlpath
+        try:
+            with zipfile.ZipFile(filepath, 'r') as f:
+                # get all files in zip
+                comp_files = f.namelist()
+                for comp_file in comp_files:               
+                    if comp_file.endswith('xml') and not '/' in comp_file:
+                        # open xml file and file "path" under http:listener
+                        cfp = f.open(comp_file, 'r')
+                        xmldoc = minidom.parse(cfp)
+                        httplistener = xmldoc.getElementsByTagName('http:listener')
+                        if httplistener:
+                            urlpath = httplistener[0].getAttribute('path')
+                            if urlpath:
+                                if urlpath.startswith('/'):
+                                    urlpath = urlpath[1:] # remove "/" from urlpath
+                                endpointurl = MULE_ENDPOINT_URL_PREFIX + urlpath
+                            else:
+                                raise OperationError(token='mule-script-missing-http-path')                                
                         else:
-                            raise OperationError(token='mule-script-missing-http-path')                                
-                    else:
-                        raise OperationError(token='mule-script-missing-endpoint')
-                if comp_file.endswith(MULE_README_EXT) and not '/' in comp_file:
-                    readmeurl = ExternalUrl.create(path='/download/mule-flows/%s' % comp_file).url
+                            raise OperationError(token='mule-script-missing-endpoint')
+                    if comp_file.endswith(MULE_README_EXT) and not '/' in comp_file:
+                        readmeurl = ExternalUrl.create(path='/download/mule-flows/%s' % comp_file).url
+        except Exception, e:
+            log('info', 'Unable to unzip file %s : %s', filepath, str(e))
+            raise OperationError(token='mule-script-bad-zipfile')
         return endpointurl, readmeurl
