@@ -130,7 +130,11 @@ class Request(Model):
             return
 
         if originator.email:
-            self._send_decline_email(assignee, originator)
+            try:
+                message = self.messages[-1]
+            except IndexError:
+                message = None
+            self._send_decline_email(assignee, originator, message=message)
 
     def cancel(self, session):
         assignee = self._get_user(self.assignee)
@@ -279,23 +283,27 @@ class Request(Model):
         for token, slot in self.slots.iteritems():
             slots[token] = slot.extract_dict('title slot')
 
-        subject = 'New StoredIQ request from %s %s' % (originator.firstname, originator.lastname)
+        subject = u'New StoredIQ request from %s %s' % (originator.firstname, originator.lastname)
         Msg.create(sender=originator.email, recipients=[{'to': [assignee.email]}],
             subject=subject, body=template.evaluate(params))
 
     def _send_cancel_email(self, assignee, originator):
-        subject = 'StoredIQ request from %s %s is canceled' % (originator.firstname,
+        subject = u'StoredIQ request from %s %s is canceled' % (originator.firstname,
             originator.lastname)
-        body = 'The request "%s" originated from %s %s has been canceled.' % (self.name,
+        body = u'The request "%s" originated from %s %s has been canceled.' % (self.name,
             originator.firstname, originator.lastname)
         Msg.create(sender=assignee.email, recipients=[{'to': [assignee.email]}],
             subject=subject, body=body)
 
-    def _send_decline_email(self, assignee, originator):
-        subject = 'StoredIQ request to %s %s is declined' % (assignee.firstname,
-            assignee.lastname)
-        body = 'The request "%s" assigned to %s %s has been declined.' % (self.name,
+    def _send_decline_email(self, assignee, originator, message=None):
+        message = (message.message or '') if message else ''
+
+        subject = u'StoredIQ request to %s %s is declined' % (
             assignee.firstname, assignee.lastname)
+        body = (u'The request "%s" assigned to %s %s has been declined '
+                u'with the following fulfillment note: \n%s') % (
+                    self.name, assignee.firstname, assignee.lastname, message)
+
         Msg.create(sender=assignee.email, recipients=[{'to': [originator.email]}],
             subject=subject, body=body)
 
