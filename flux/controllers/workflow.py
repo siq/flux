@@ -33,6 +33,11 @@ class WorkflowController(ModelController):
     @support_returning
     def create(self, request, response, subject, data):
         if 'type' in data and data['type'] == 'mule':
+            # check the duplication of workflow name before proceed
+            session = self.schema.session
+            if session.query(Workflow).filter(Workflow.name==data['name']).count():
+              raise OperationError(token='duplicate-workflow-name')
+            
             data['specification'] = MULE_DUMMY_SPEC # set no-op yaml spec to mule script          
             if not 'mule_extensions' in data: # if mule_extensions doesn't exist, get the extension information from mule archive
                 data['mule_extensions'] = {}
@@ -69,7 +74,6 @@ class WorkflowController(ModelController):
             raise OperationError(token='cannot-delete-inuse-workflow')
         
         # check if the run has uncompleted instances
-        from flux.models import Run
         session = self.schema.session
         if session.query(Run).filter(Run.workflow_id==subject.id, Run.status.in_(ACTIVE_RUN_STATUSES.split(' '))).count():
             log('info', 'workflow %s (%s) cannot be deleted as it has run with uncompleted status of either %s', subject.id, workflowName, ACTIVE_RUN_STATUSES)
