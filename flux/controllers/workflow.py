@@ -241,7 +241,7 @@ class WorkflowController(ModelController):
         endpointurl = ''
         readmeurl = ''
         
-        try:
+        if zipfile.is_zipfile(filepath):                
             with zipfile.ZipFile(filepath, 'r') as f:
                 # get all files in zip
                 comp_files = f.namelist()
@@ -263,7 +263,9 @@ class WorkflowController(ModelController):
                             raise OperationError(token='mule-script-missing-endpoint')
                     if comp_file.endswith(MULE_README_EXT) and not '/' in comp_file:
                         readmeurl = ExternalUrl.create(path='/download/mule-flows/%s' % comp_file).url
-        except Exception, e:
-            log('info', 'Unable to unzip file %s : %s', filepath, str(e))
+        else:
+            log('info', 'Unable to unzip file %s', filepath)
             raise OperationError(token='mule-script-bad-zipfile')
+        if endpointurl.strip() == 0:
+            raise OperationError(token='mule-script-missing-endpoint')
         return endpointurl, readmeurl
