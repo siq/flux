@@ -266,6 +266,6 @@ class WorkflowController(ModelController):
         else:
             log('info', 'Unable to unzip file %s', filepath)
             raise OperationError(token='mule-script-bad-zipfile')
-        if endpointurl.strip() == 0:
+        if not endpointurl.strip():
             raise OperationError(token='mule-script-missing-endpoint')
         return endpointurl, readmeurl
