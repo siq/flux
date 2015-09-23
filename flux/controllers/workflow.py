@@ -51,6 +51,13 @@ class WorkflowController(ModelController):
                     except ValueError:
                         raise OperationError(token='mule-script-invalid-upload')
                 endpointurl, readmeurl = self._extract_zipfile(filepath)
+                # check duplication of packageurl, endpointurl and readmeurl
+                if session.query(WorkflowMule).filter_by(packageurl=data['mule_extensions']['packageurl']).count():
+                    raise OperationError(token='mule-script-duplicate-packageurl')
+                if session.query(WorkflowMule).filter_by(endpointurl=endpointurl).count():
+                    raise OperationError(token='mule-script-duplicate-endpointurl')
+                if readmeurl.strip() and session.query(WorkflowMule).filter_by(readmeurl=readmeurl).count():
+                    raise OperationError(token='mule-script-duplicate-readmeurl')
                 data['mule_extensions']['endpointurl'] = endpointurl
                 data['mule_extensions']['readmeurl'] = readmeurl
                 self._deploy_mulescript(data['name'], filepath)
