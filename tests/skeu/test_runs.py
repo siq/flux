@@ -15,19 +15,19 @@ adhoc_configure({
         'url': 'postgresql://postgres@localhost/flux'
     },
     'mesh:flux': {
-        'url': 'http://localhost:9995/',
+        'url': 'http://localhost:9997/',
         'bundle': 'flux.API',
     },
     'mesh:docket': {
-        'url': 'http://localhost:9996/',
+        'url': 'http://localhost:9998/',
         'specification': 'flux.bindings.docket.specification',
     },
     'mesh:platoon': {
-        'url': 'http://localhost:9998/',
+        'url': 'http://localhost:4321/',
         'specification': 'flux.bindings.platoon.specification',
     },
     'mesh:truss': {
-        'url': 'http://localhost:9997/',
+        'url': 'http://localhost:9999/api',
         'specification': 'flux.bindings.truss.specification',
     },
 })
