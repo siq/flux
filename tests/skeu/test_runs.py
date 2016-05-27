@@ -63,7 +63,7 @@ class BaseTestCase(MeshTestCase):
                     session.rollback()
                     continue
 
-    def _poll_run_status(self, client, run_id, status, include=None, limit=5, wait=20):
+    def _poll_run_status(self, client, run_id, status, include=None, limit=5, wait=6):
         run = None
         data = {'include': include} if include else None
         while limit:
@@ -82,7 +82,7 @@ class BaseTestCase(MeshTestCase):
         return run
 
     def _setup_active_run(self, client, workflow_id,
-            steps=None, parameters=None, limit=5, wait=20):
+            steps=None, parameters=None, limit=5, wait=6):
         data = {'workflow_id': workflow_id, 'parameters': parameters}
         resp = client.execute('run', 'create', data=data)
         self.assertEqual('OK', resp.status)
@@ -1265,8 +1265,7 @@ class TestRunTimedoutCases(BaseTestCase):
 
         run = self._setup_active_run(client, workflow_id)
         run_id = run['id']
-        result = self._poll_run_status(client, run_id, 'timedout',
-                include=['executions'], limit=10, wait=20)
+        result = self._poll_run_status(client, run_id, 'timedout', include=['executions'])
 
         run_ended = result.pop('ended')
         run_started = result.pop('started')
@@ -1357,8 +1356,7 @@ class TestRunTimedoutCases(BaseTestCase):
         self.assertEquals('OK', resp.status)
         run_id = resp.content['id']
 
-        result = self._poll_run_status(client, run_id, 'timedout',
-                include=['executions'], limit=10, wait=20)
+        result = self._poll_run_status(client, run_id, 'timedout', include=['executions'])
 
         run_started = result.pop('started')
         run_ended = result.pop('ended')
