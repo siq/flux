@@ -247,9 +247,9 @@ class Request(Model):
 
     def _get_user(self, user_id):
         try:
-            docket_dependency = DocketDependency()
-            DocketSubject = docket_dependency.docket_entity.bind('docket.entity/1.0/security/1.0/subject')
-            usr = DocketSubject.get(user_id)
+            bastion_dependency = BastionDependency()
+            Bastion = bastion_dependency.bastion.bind('security/1.0/subject')
+            usr = Bastion.get(user_id)
             return usr
         except Exception:
             log('exception', 'failed to retrieve user subject with user id "%s"' % user_id)
@@ -400,3 +400,6 @@ class RequestProduct(Model):
 class DocketDependency(Unit):
     docket_entity = MeshDependency('docket.entity')
     enamel_concept = MeshDependency('enamel.concept')
+
+class BastionDependency(Unit):
+    bastion = MeshDependency('security')
