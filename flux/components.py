@@ -58,7 +58,7 @@ GENERATED_BY = Intent(
 REASSIGN_REQUEST_ASSIGNEE = SubscribedTask(
     id='d2407ce4-dcda-4859-bba7-e73741041e5c',
     tag='reassign-request-assignee',
-    topic='entity:deleted',
+    topic='subject:deleted',
     aspects={'entity': 'bastion:subject'})
 
 class Flux(Component):
